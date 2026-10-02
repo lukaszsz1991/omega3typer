@@ -2,32 +2,18 @@ import secrets
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
-
-# ---------------------------------------------------------
-# UŻYTKOWNIK
-# ---------------------------------------------------------
-# Rozszerzamy wbudowany model User Django o pole avatar (WF-04).
-# Hasła są automatycznie hashowane przez Django (spełnia WNF-10).
 class User(AbstractUser):
     avatar = models.ImageField(upload_to="avatars/", blank=True, null=True)
 
     def __str__(self):
         return self.username
 
-
-# ---------------------------------------------------------
-# SPORT
-# ---------------------------------------------------------
 class Sport(models.Model):
     name = models.CharField(max_length=50, unique=True)
 
     def __str__(self):
         return self.name
 
-
-# ---------------------------------------------------------
-# DRUŻYNA
-# ---------------------------------------------------------
 class Team(models.Model):
     name = models.CharField(max_length=100)
     sport = models.ForeignKey(Sport, on_delete=models.CASCADE, related_name="teams")
@@ -35,23 +21,25 @@ class Team(models.Model):
     def __str__(self):
         return self.name
 
-
-# ---------------------------------------------------------
-# LIGA (prywatna lub globalna)
-# ---------------------------------------------------------
 class League(models.Model):
     name = models.CharField(max_length=100)
     sport = models.ForeignKey(Sport, on_delete=models.CASCADE, related_name="leagues")
+
+    def __str__(self):
+        return self.name
+
+class Group(models.Model):
+    name = models.CharField(max_length=100)
     is_private = models.BooleanField(default=False)
     invite_code = models.CharField(max_length=20, unique=True, blank=True, null=True)
 
-    # M2M przez tabelę pośredniczącą LeagueMember (WF-20, WF-21, WF-23, WF-24)
+    # M2M przez tabelę pośredniczącą GroupMember (WF-20, WF-21, WF-23, WF-24)
     members = models.ManyToManyField(
-        User, through="LeagueMember", related_name="leagues"
+        User, through="GroupMember", related_name="typing_groups"
     )
 
     def save(self, *args, **kwargs):
-        # Automatyczne generowanie kodu zaproszenia dla lig prywatnych
+        # Automatyczne generowanie kodu zaproszenia dla grup prywatnych
         if self.is_private and not self.invite_code:
             self.invite_code = secrets.token_urlsafe(8)[:20]
         super().save(*args, **kwargs)
@@ -59,25 +47,17 @@ class League(models.Model):
     def __str__(self):
         return self.name
 
-
-# ---------------------------------------------------------
-# CZŁONKOSTWO W LIDZE (tabela pośrednicząca User <-> League)
-# ---------------------------------------------------------
-class LeagueMember(models.Model):
+class GroupMember(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    league = models.ForeignKey(League, on_delete=models.CASCADE)
+    group = models.ForeignKey(Group, on_delete=models.CASCADE)
     joined_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ("user", "league")  # użytkownik nie dołącza 2x do tej samej ligi
+        unique_together = ("user", "group")  # użytkownik nie dołącza 2x do tej samej grupy
 
     def __str__(self):
-        return f"{self.user} w {self.league}"
+        return f"{self.user} w {self.group}"
 
-
-# ---------------------------------------------------------
-# MECZ
-# ---------------------------------------------------------
 class Match(models.Model):
     class Status(models.TextChoices):
         SCHEDULED = "scheduled", "Zaplanowany"
@@ -124,10 +104,6 @@ class Match(models.Model):
         else:
             return f"{self.home_team} - {self.away_team} ({self.scheduled_at:%d-%m-%Y})"
 
-
-# ---------------------------------------------------------
-# TYP (PREDICTION)
-# ---------------------------------------------------------
 class Prediction(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="predictions")
     match = models.ForeignKey(Match, on_delete=models.CASCADE, related_name="predictions")
@@ -142,12 +118,6 @@ class Prediction(models.Model):
     def __str__(self):
         return f"{self.user} -> {self.match}: {self.predicted_home}:{self.predicted_away}"
 
-
-# ---------------------------------------------------------
-# PUNKTY
-# ---------------------------------------------------------
-# Powiązane 1-do-1 z Prediction (user i match odczytujemy przez prediction,
-# więc nie duplikujemy tych kolumn jak w oryginalnym ERD).
 class Points(models.Model):
     prediction = models.OneToOneField(
         Prediction, on_delete=models.CASCADE, related_name="points"
