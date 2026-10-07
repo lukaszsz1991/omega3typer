@@ -2,17 +2,20 @@ import secrets
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
+
 class User(AbstractUser):
     avatar = models.ImageField(upload_to="avatars/", blank=True, null=True)
 
     def __str__(self):
         return self.username
 
+
 class Sport(models.Model):
     name = models.CharField(max_length=50, unique=True)
 
     def __str__(self):
         return self.name
+
 
 class Team(models.Model):
     name = models.CharField(max_length=100)
@@ -21,6 +24,8 @@ class Team(models.Model):
     def __str__(self):
         return self.name
 
+
+# Liga sportowa / rozgrywki (np. Ekstraklasa) — do niej należą mecze.
 class League(models.Model):
     name = models.CharField(max_length=100)
     sport = models.ForeignKey(Sport, on_delete=models.CASCADE, related_name="leagues")
@@ -28,14 +33,18 @@ class League(models.Model):
     def __str__(self):
         return self.name
 
-class Group(models.Model):
+
+# Grupa użytkowników do typowania (np. "Typujemy z chłopakami z pracy").
+# Nazwa celowo NIE "Group" — Django ma już wbudowany model auth.Group
+# (do uprawnień), więc "Group" kolidowałoby wizualnie w panelu admina.
+class TypingGroup(models.Model):
     name = models.CharField(max_length=100)
     is_private = models.BooleanField(default=False)
     invite_code = models.CharField(max_length=20, unique=True, blank=True, null=True)
 
-    # M2M przez tabelę pośredniczącą GroupMember (WF-20, WF-21, WF-23, WF-24)
+    # M2M przez tabelę pośredniczącą TypingGroupMember (WF-20, WF-21, WF-23, WF-24)
     members = models.ManyToManyField(
-        User, through="GroupMember", related_name="typing_groups"
+        User, through="TypingGroupMember", related_name="typing_groups"
     )
 
     def save(self, *args, **kwargs):
@@ -47,9 +56,10 @@ class Group(models.Model):
     def __str__(self):
         return self.name
 
-class GroupMember(models.Model):
+
+class TypingGroupMember(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    group = models.ForeignKey(Group, on_delete=models.CASCADE)
+    group = models.ForeignKey(TypingGroup, on_delete=models.CASCADE)
     joined_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -57,6 +67,7 @@ class GroupMember(models.Model):
 
     def __str__(self):
         return f"{self.user} w {self.group}"
+
 
 class Match(models.Model):
     class Status(models.TextChoices):
@@ -104,11 +115,12 @@ class Match(models.Model):
         else:
             return f"{self.home_team} - {self.away_team} ({self.scheduled_at:%d-%m-%Y})"
 
+
 class Prediction(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="predictions")
     match = models.ForeignKey(Match, on_delete=models.CASCADE, related_name="predictions")
-    predicted_home = models.PositiveIntegerField()
-    predicted_away = models.PositiveIntegerField()
+    predicted_home = models.PositiveSmallIntegerField()
+    predicted_away = models.PositiveSmallIntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -117,6 +129,7 @@ class Prediction(models.Model):
 
     def __str__(self):
         return f"{self.user} -> {self.match}: {self.predicted_home}:{self.predicted_away}"
+
 
 class Points(models.Model):
     prediction = models.OneToOneField(
