@@ -1,15 +1,13 @@
-<!DOCTYPE html>
-<html lang="pl">
-<head>
-    <meta charset="UTF-8">
-    <title>Omega 3 Typer</title>
-</head>
 <body>
     {% if user.is_authenticated %}
         <h1>Witaj, {{ user.username }}!</h1>
+        <form method="post" action="{% url 'typer:logout' %}">
+            {% csrf_token %}
+            <button type="submit">Wyloguj</button>
+        </form>
     {% else %}
         <h1>Omega 3 Typer</h1>
+        <a href="{% url 'typer:login' %}">Zaloguj się</a> |
         <a href="{% url 'typer:register' %}">Zarejestruj się</a>
     {% endif %}
 </body>
-</html>
