@@ -1,10 +1,6 @@
-<!DOCTYPE html>
-<html lang="pl">
-<head>
-    <meta charset="UTF-8">
-    <title>Logowanie — Omega 3 Typer</title>
-</head>
-<body>
+{% extends "typer/base.html" %}
+{% block title %}Logowanie — Omega 3 Typer{% endblock %}
+{% block content %}
     <h1>Logowanie</h1>
     <form method="post">
         {% csrf_token %}
@@ -12,5 +8,4 @@
         <button type="submit">Zaloguj</button>
     </form>
     <p>Nie masz konta? <a href="{% url 'typer:register' %}">Zarejestruj się</a></p>
-</body>
-</html>
+{%  endblock %}

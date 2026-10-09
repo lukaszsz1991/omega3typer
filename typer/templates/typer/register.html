@@ -1,15 +1,10 @@
-<!DOCTYPE html>
-<html lang="pl">
-<head>
-    <meta charset="UTF-8">
-    <title>Rejestracja — Omega 3 Typer</title>
-</head>
-<body>
+{% extends "typer/base.html" %}
+{% block title %}Logowanie — Omega 3 Typer{% endblock %}
+{% block content %}
     <h1>Rejestracja</h1>
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
         <button type="submit">Zarejestruj</button>
     </form>
-</body>
-</html>
+{% endblock %}
