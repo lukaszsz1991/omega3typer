@@ -1,6 +1,7 @@
 import secrets
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.utils import timezone
 
 
 class User(AbstractUser):
@@ -24,8 +25,6 @@ class Team(models.Model):
     def __str__(self):
         return self.name
 
-
-# Liga sportowa / rozgrywki (np. Ekstraklasa) — do niej należą mecze.
 class League(models.Model):
     name = models.CharField(max_length=100)
     sport = models.ForeignKey(Sport, on_delete=models.CASCADE, related_name="leagues")
@@ -33,22 +32,16 @@ class League(models.Model):
     def __str__(self):
         return self.name
 
-
-# Grupa użytkowników do typowania (np. "Typujemy z chłopakami z pracy").
-# Nazwa celowo NIE "Group" — Django ma już wbudowany model auth.Group
-# (do uprawnień), więc "Group" kolidowałoby wizualnie w panelu admina.
 class TypingGroup(models.Model):
     name = models.CharField(max_length=100)
     is_private = models.BooleanField(default=False)
     invite_code = models.CharField(max_length=20, unique=True, blank=True, null=True)
 
-    # M2M przez tabelę pośredniczącą TypingGroupMember (WF-20, WF-21, WF-23, WF-24)
     members = models.ManyToManyField(
         User, through="TypingGroupMember", related_name="typing_groups"
     )
 
     def save(self, *args, **kwargs):
-        # Automatyczne generowanie kodu zaproszenia dla grup prywatnych
         if self.is_private and not self.invite_code:
             self.invite_code = secrets.token_urlsafe(8)[:20]
         super().save(*args, **kwargs)
@@ -94,7 +87,6 @@ class Match(models.Model):
     )
 
     def save(self, *args, **kwargs):
-        # Automatyczne wyliczenie wyniku na podstawie bramek (tylko gdy oba wpisane)
         if self.home_score is not None and self.away_score is not None:
             if self.home_score > self.away_score:
                 self.result = self.Result.HOME
@@ -106,8 +98,7 @@ class Match(models.Model):
 
     @property
     def is_locked(self):
-        """Blokada typowania po rozpoczęciu meczu (WF-14, WNF-13)."""
-        return self.status != self.Status.SCHEDULED
+        return (self.status != self.Status.SCHEDULED or timezone.now() >= self.scheduled_at)
 
     def __str__(self):
         if self.status == self.Status.FINISHED:

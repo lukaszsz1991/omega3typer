@@ -1,0 +1,22 @@
+{% extends "typer/base.html" %}
+
+{% block title %}Typuj — Omega 3 Typer{% endblock %}
+
+{% block content %}
+<h2 class="mb-1">{{ match.home_team }} - {{ match.away_team }}</h2>
+<p class="text-muted">{{ match.league }}, {{ match.scheduled_at|date:"d.m.Y H:i" }}</p>
+
+<form method="post" class="col-md-4">
+    {% csrf_token %}
+    <div class="mb-3">
+        {{ form.predicted_home.label_tag }}
+        {{ form.predicted_home }}
+    </div>
+    <div class="mb-3">
+        {{ form.predicted_away.label_tag }}
+        {{ form.predicted_away }}
+    </div>
+    <button type="submit" class="btn btn-primary">Zapisz typ</button>
+    <a href="{% url 'typer:match_list' %}" class="btn btn-link">Anuluj</a>
+</form>
+{% endblock %}

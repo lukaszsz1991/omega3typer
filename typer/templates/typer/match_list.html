@@ -3,33 +3,38 @@
 {% block title %}Mecze — Omega 3 Typer{% endblock %}
 
 {% block content %}
-<h2 class="mb-3">Nadchodzące mecze</h2>
-<div class="list-group mb-5">
-    {% for match in upcoming %}
-        <div class="list-group-item d-flex justify-content-between align-items-center">
-            <div>
-                <small class="text-muted">{{ match.league }}</small><br>
-                <strong>{{ match.home_team }} - {{ match.away_team }}</strong>
+    <h2 class="mb-3">Nadchodzące mecze</h2>
+    <div class="list-group mb-5">
+        {% for match in upcoming %}
+            <div class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <small class="text-muted">{{ match.league }}</small><br>
+                    <strong>{{ match.home_team }} - {{ match.away_team }}</strong>
+                </div>
+                <div>
+                    <span class="badge bg-secondary me-2">{{ match.scheduled_at|date:"d.m.Y H:i" }}</span>
+                    {% if not match.is_locked %}
+                        <a href="{% url 'typer:predict' match.id %}" class="btn btn-sm btn-primary">Typuj</a>
+                    {% endif %}
+                </div>
             </div>
-            <span class="badge bg-secondary">{{ match.scheduled_at|date:"d.m.Y H:i" }}</span>
-        </div>
-    {% empty %}
-        <div class="list-group-item text-muted">Brak nadchodzących meczów.</div>
-    {% endfor %}
-</div>
+        {% empty %}
+            <div class="list-group-item text-muted">Brak nadchodzących meczów.</div>
+        {% endfor %}
+    </div>
 
-<h2 class="mb-3">Zakończone mecze</h2>
-<div class="list-group">
-    {% for match in finished %}
-        <div class="list-group-item d-flex justify-content-between align-items-center">
-            <div>
-                <small class="text-muted">{{ match.league }}</small><br>
-                <strong>{{ match.home_team }} {{ match.home_score }}:{{ match.away_score }} {{ match.away_team }}</strong>
+    <h2 class="mb-3">Zakończone mecze</h2>
+    <div class="list-group">
+        {% for match in finished %}
+            <div class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <small class="text-muted">{{ match.league }}</small><br>
+                    <strong>{{ match.home_team }} {{ match.home_score }}:{{ match.away_score }} {{ match.away_team }}</strong>
+                </div>
+                <span class="badge bg-success">{{ match.scheduled_at|date:"d.m.Y" }}</span>
             </div>
-            <span class="badge bg-success">{{ match.scheduled_at|date:"d.m.Y" }}</span>
-        </div>
-    {% empty %}
-        <div class="list-group-item text-muted">Brak zakończonych meczów.</div>
-    {% endfor %}
-</div>
+        {% empty %}
+            <div class="list-group-item text-muted">Brak zakończonych meczów.</div>
+        {% endfor %}
+    </div>
 {% endblock %}
