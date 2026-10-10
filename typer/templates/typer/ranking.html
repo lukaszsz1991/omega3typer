@@ -1,0 +1,27 @@
+{% extends "typer/base.html" %}
+
+{% block title %}Ranking — Omega 3 Typer{% endblock %}
+
+{% block content %}
+<h2 class="mb-3">Ranking globalny</h2>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Użytkownik</th>
+            <th class="text-end">Punkty</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for u in users %}
+            <tr {% if u == user %}class="table-primary"{% endif %}>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ u.username }}</td>
+                <td class="text-end">{{ u.total_points }}</td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="3" class="text-muted">Brak rozliczonych typów.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

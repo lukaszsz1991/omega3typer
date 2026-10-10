@@ -3,18 +3,21 @@ from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.shortcuts import get_object_or_404
-from .models import Match, Prediction
+from django.db.models import Sum
+from .models import Match, Prediction, User
 from .forms import RegistrationForm, PredictionForm
+
 
 @login_required
 def match_list_view(request):
     matches = Match.objects.select_related("league", "home_team", "away_team")
     upcoming = matches.exclude(status=Match.Status.FINISHED).order_by("scheduled_at")
     finished = matches.filter(status=Match.Status.FINISHED)
-    return render(request,"typer/match_list.html", {
+    return render(request, "typer/match_list.html", {
         "upcoming": upcoming,
         "finished": finished,
     })
+
 
 def register_view(request):
     if request.method == "POST":
@@ -28,8 +31,10 @@ def register_view(request):
 
     return render(request, "typer/register.html", {"form": form})
 
+
 def home_view(request):
     return render(request, "typer/home.html")
+
 
 @login_required
 def predict_view(request, match_id):
@@ -54,3 +59,12 @@ def predict_view(request, match_id):
         form = PredictionForm(instance=existing_prediction)
 
     return render(request, "typer/predict.html", {"form": form, "match": match})
+
+@login_required
+def ranking_view(request):
+    users = (
+        User.objects.annotate(total_points=Sum("predictions__points__points_awarded"))
+        .filter(total_points__isnull=False)
+        .order_by("-total_points", "username")
+    )
+    return render(request, "typer/ranking.html", {"users": users})

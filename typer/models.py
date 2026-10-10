@@ -2,7 +2,7 @@ import secrets
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
-from .constants import POINTS_WINNER, POINT_GOAL_DIFFERENCE, POINTS_EXACT_SCORE, NO_POINTS
+from .constants import POINTS_WINNER, POINTS_GOAL_DIFFERENCE, POINTS_EXACT_SCORE, NO_POINTS
 
 class User(AbstractUser):
     avatar = models.ImageField(upload_to="avatars/", blank=True, null=True)
@@ -139,7 +139,7 @@ class Prediction(models.Model):
         if (self.predicted_home == match.home_score and self.predicted_away == match.away_score):
             value = POINTS_EXACT_SCORE
         elif (self.predicted_home - self.predicted_away == match.home_score - match.away_score):
-            value = POINT_GOAL_DIFFERENCE
+            value = POINTS_GOAL_DIFFERENCE
         elif outcome(self.predicted_home, self.predicted_away) == outcome(match.home_score, match.away_score):
             value = POINTS_WINNER
         else:

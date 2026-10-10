@@ -13,6 +13,7 @@
             <ul class="navbar-nav ms-auto align-items-center">
                 {% if user.is_authenticated %}
                     <li class="nav-item"><a class="nav-link" href="{% url 'typer:match_list' %}">Mecze</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'typer:ranking' %}">Ranking</a></li>
                     <li class="nav-item"><span class="navbar-text mx-3">{{ user.username }}</span></li>
                     <li class="nav-item">
                         <form method="post" action="{% url 'typer:logout' %}">

@@ -11,4 +11,5 @@ urlpatterns = [
     path('matches/', views.match_list_view, name='match_list'),
     path('matches/<int:match_id>/predict/', views.predict_view, name='predict'),
     path('', views.home_view, name='home'),
+    path('ranking/', views.ranking_view, name='ranking'),
 ]
