@@ -2,7 +2,7 @@ import secrets
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
-
+from .constants import POINTS_WINNER, POINT_GOAL_DIFFERENCE, POINTS_EXACT_SCORE, NO_POINTS
 
 class User(AbstractUser):
     avatar = models.ImageField(upload_to="avatars/", blank=True, null=True)
@@ -61,6 +61,12 @@ class TypingGroupMember(models.Model):
     def __str__(self):
         return f"{self.user} w {self.group}"
 
+def outcome(home, away):
+    if home > away:
+        return "home"
+    if away > home:
+        return "away"
+    return "draw"
 
 class Match(models.Model):
     class Status(models.TextChoices):
@@ -95,6 +101,13 @@ class Match(models.Model):
             else:
                 self.result = self.Result.DRAW
         super().save(*args, **kwargs)
+        if (
+            self.status == self.Status.FINISHED
+            and self.home_score is not None
+            and self.away_score is not None
+        ):
+            for prediction in self.predictions.all():
+                prediction.calculate_points()
 
     @property
     def is_locked(self):
@@ -120,6 +133,18 @@ class Prediction(models.Model):
 
     def __str__(self):
         return f"{self.user} -> {self.match}: {self.predicted_home}:{self.predicted_away}"
+
+    def calculate_points(self):
+        match = self.match
+        if (self.predicted_home == match.home_score and self.predicted_away == match.away_score):
+            value = POINTS_EXACT_SCORE
+        elif (self.predicted_home - self.predicted_away == match.home_score - match.away_score):
+            value = POINT_GOAL_DIFFERENCE
+        elif outcome(self.predicted_home, self.predicted_away) == outcome(match.home_score, match.away_score):
+            value = POINTS_WINNER
+        else:
+            value = NO_POINTS
+        Points.objects.update_or_create(prediction=self, defaults={"points_awarded": value})
 
 
 class Points(models.Model):
