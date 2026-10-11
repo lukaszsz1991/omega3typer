@@ -29,3 +29,10 @@ class TypingGroupForm(forms.ModelForm):
         fields = ["name"]
         labels = {"name": "Nazwa grupy"}
         widgets = {"name": forms.TextInput(attrs={'class': 'form-control'})}
+
+class JoinGroupForm(forms.Form):
+    code = forms.CharField(
+        max_length=20,
+        label="Kod zaproszenia",
+        widget=forms.TextInput(attrs={'class': 'form-control'}),
+    )

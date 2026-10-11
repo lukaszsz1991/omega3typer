@@ -1,16 +1,9 @@
 from datetime import timedelta
-
-from django.test import TestCase
+from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils import timezone
-
-from .constants import (
-    POINTS_EXACT_SCORE,
-    POINTS_GOAL_DIFFERENCE,
-    POINTS_WINNER,
-    NO_POINTS,
-)
-from .models import User, Sport, Team, League, Match, Prediction, Points, outcome
+from .constants import POINTS_EXACT_SCORE, POINTS_GOAL_DIFFERENCE, POINTS_WINNER, NO_POINTS
+from .models import User, Sport, Team, League, Match, Prediction, Points, TypingGroup, TypingGroupMember, outcome
 
 
 class OutcomeTests(TestCase):
@@ -54,14 +47,14 @@ class PointsCalculationTests(BaseTestCase):
         # (wynik meczu, typ, oczekiwane punkty)
         cases = [
             ((2, 1), (2, 1), POINTS_EXACT_SCORE),
-            ((2, 1), (3, 2), POINTS_GOAL_DIFFERENCE),   # ta sama różnica
+            ((2, 1), (3, 2), POINTS_GOAL_DIFFERENCE),  # ta sama różnica
             ((2, 1), (1, 0), POINTS_GOAL_DIFFERENCE),
-            ((2, 1), (3, 0), POINTS_WINNER),            # dobry zwycięzca, inna różnica
-            ((2, 1), (1, 1), NO_POINTS),                # remis zamiast wygranej
-            ((2, 1), (0, 1), NO_POINTS),                # zły zwycięzca
-            ((1, 1), (1, 1), POINTS_EXACT_SCORE),       # dokładny remis
-            ((2, 2), (1, 1), POINTS_GOAL_DIFFERENCE),   # trafiony remis, inny wynik
-            ((1, 1), (2, 1), NO_POINTS),                # typ wygranej, był remis
+            ((2, 1), (3, 0), POINTS_WINNER),  # dobry zwycięzca, inna różnica
+            ((2, 1), (1, 1), NO_POINTS),  # remis zamiast wygranej
+            ((2, 1), (0, 1), NO_POINTS),  # zły zwycięzca
+            ((1, 1), (1, 1), POINTS_EXACT_SCORE),  # dokładny remis
+            ((2, 2), (1, 1), POINTS_GOAL_DIFFERENCE),  # trafiony remis, inny wynik
+            ((1, 1), (2, 1), NO_POINTS),  # typ wygranej, był remis
         ]
         for (real_home, real_away), (pred_home, pred_away), expected in cases:
             with self.subTest(wynik=(real_home, real_away), typ=(pred_home, pred_away)):
@@ -155,3 +148,104 @@ class PredictViewTests(BaseTestCase):
         self.match.save()
         self.client.post(self.url, {"predicted_home": 2, "predicted_away": 1})
         self.assertEqual(Prediction.objects.count(), 0)
+
+
+class TypingGroupViewTests(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        self.other = User.objects.create_user(username="drugi", password="haslo-testowe-123")
+        self.client.login(username="tester", password="haslo-testowe-123")
+        self.other_client = Client()
+        self.other_client.login(username="drugi", password="haslo-testowe-123")
+
+    def create_group(self):
+        self.client.post(reverse("typer:group_create"), {"name": "Znajomi"})
+        return TypingGroup.objects.get(name="Znajomi")
+
+    def test_create_group_sets_owner_member_and_code(self):
+        group = self.create_group()
+        self.assertEqual(group.owner, self.user)
+        self.assertTrue(group.is_private)
+        self.assertTrue(group.invite_code)
+        self.assertIn(self.user, group.members.all())
+
+    def test_non_member_gets_404(self):
+        group = self.create_group()
+        response = self.other_client.get(reverse("typer:group_detail", args=[group.id]))
+        self.assertEqual(response.status_code, 404)
+
+    def test_join_with_valid_code(self):
+        group = self.create_group()
+        response = self.other_client.post(reverse("typer:group_join"), {"code": group.invite_code})
+        self.assertRedirects(response, reverse("typer:group_detail", args=[group.id]))
+        self.assertIn(self.other, group.members.all())
+
+    def test_join_with_invalid_code(self):
+        group = self.create_group()
+        self.other_client.post(reverse("typer:group_join"), {"code": "zly-kod"})
+        self.assertNotIn(self.other, group.members.all())
+
+    def test_joining_twice_does_not_duplicate_membership(self):
+        group = self.create_group()
+        for _ in range(2):
+            self.other_client.post(reverse("typer:group_join"), {"code": group.invite_code})
+        self.assertEqual(
+            TypingGroupMember.objects.filter(group=group, user=self.other).count(), 1
+        )
+
+    def test_anonymous_user_cannot_join(self):
+        group = self.create_group()
+        self.client.logout()
+        response = self.client.post(reverse("typer:group_join"), {"code": group.invite_code})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(group.members.count(), 1)
+
+
+class GroupRankingTests(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        self.friend = User.objects.create_user(username="kolega", password="haslo-testowe-123")
+        self.outsider = User.objects.create_user(username="obcy", password="haslo-testowe-123")
+        self.group = TypingGroup.objects.create(name="Znajomi", is_private=True, owner=self.user)
+        TypingGroupMember.objects.create(user=self.user, group=self.group)
+        TypingGroupMember.objects.create(user=self.friend, group=self.group)
+        self.client.login(username="tester", password="haslo-testowe-123")
+        self.url = reverse("typer:group_detail", args=[self.group.id])
+
+    def ranking(self):
+        return list(self.client.get(self.url).context["ranking"])
+
+    def test_ranking_orders_members_by_points(self):
+        self.predict(2, 1)  # tester: dokładny wynik
+        Prediction.objects.create(
+            user=self.friend, match=self.match, predicted_home=3, predicted_away=0
+        )  # kolega: sam zwycięzca
+        self.finish(2, 1)
+        users = self.ranking()
+        self.assertEqual([u.username for u in users], ["tester", "kolega"])
+        self.assertEqual(users[0].total_points, POINTS_EXACT_SCORE)
+        self.assertEqual(users[1].total_points, POINTS_WINNER)
+
+    def test_member_without_points_is_listed_with_zero(self):
+        users = self.ranking()
+        self.assertEqual(len(users), 2)
+        self.assertTrue(all(u.total_points == 0 for u in users))
+
+    def test_points_of_non_members_are_not_listed(self):
+        Prediction.objects.create(
+            user=self.outsider, match=self.match, predicted_home=2, predicted_away=1
+        )
+        self.finish(2, 1)
+        names = [u.username for u in self.ranking()]
+        self.assertNotIn("obcy", names)
+
+
+class LeagueViewTests(BaseTestCase):
+    def test_league_list_shows_leagues(self):
+        response = self.client.get(reverse("typer:league_list"))
+        self.assertContains(response, self.league.name)
+
+    def test_league_detail_shows_upcoming_match(self):
+        response = self.client.get(reverse("typer:league_detail", args=[self.league.id]))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(list(response.context["upcoming"]), [self.match])

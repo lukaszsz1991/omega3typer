@@ -1,0 +1,31 @@
+{% extends "typer/base.html" %}
+{% block content %}
+<h1 class="h3 mb-4">{{ league.name }} <small class="text-muted">{{ league.sport.name }}</small></h1>
+
+<h2 class="h5">Nadchodzące mecze</h2>
+<ul class="list-group mb-4">
+  {% for m in upcoming %}
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+      <span>{{ m.home_team }} – {{ m.away_team }}
+        <small class="text-muted">{{ m.scheduled_at|date:"d.m H:i" }}</small></span>
+      {% if user.is_authenticated %}
+        <a class="btn btn-sm btn-primary" href="{% url 'predict' m.id %}">Typuj</a>
+      {% endif %}
+    </li>
+  {% empty %}
+    <li class="list-group-item text-muted">Brak zaplanowanych meczów.</li>
+  {% endfor %}
+</ul>
+
+<h2 class="h5">Ostatnie wyniki</h2>
+<ul class="list-group">
+  {% for m in finished %}
+    <li class="list-group-item">
+      {{ m.home_team }} {{ m.home_score }}:{{ m.away_score }} {{ m.away_team }}
+      <small class="text-muted">{{ m.scheduled_at|date:"d.m" }}</small>
+    </li>
+  {% empty %}
+    <li class="list-group-item text-muted">Brak zakończonych meczów.</li>
+  {% endfor %}
+</ul>
+{% endblock %}

@@ -85,7 +85,7 @@ Działające MVP backendowe:
 ### Tydzień 7 – System lig prywatnych
 
 - [x] Tworzenie prywatnych lig (w kodzie: `TypingGroup`)
-- [ ] Dołączanie do ligi przez kod
+- [x] Dołączanie do ligi przez kod
 - [ ] Ranking w obrębie ligi
 - [ ] Panel zarządzania ligą
 

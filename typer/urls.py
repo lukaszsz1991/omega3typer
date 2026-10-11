@@ -15,4 +15,7 @@ urlpatterns = [
     path('groups/', views.group_list_view, name='group_list'),
     path('groups/new/', views.group_create_view, name='group_create'),
     path('groups/<int:group_id>/', views.group_detail_view, name='group_detail'),
+    path('groups/join/', views.group_join_view, name='group_join'),
+    path("leagues/", views.league_list_view, name="league_list"),
+    path("leagues/<int:league_id>/", views.league_detail_view, name="league_detail"),
 ]
