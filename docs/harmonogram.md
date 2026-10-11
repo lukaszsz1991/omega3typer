@@ -3,6 +3,7 @@
 ## Aplikacja webowa do typowania wyników wydarzeń sportowych (Django)
 
 _Stan na 11.10.2026._
+_Zakres: piłka nożna i ręczna. Każdy sezon rozgrywek to osobna liga (np. „Bundesliga 2027”), grupa znajomych jest przypisana do jednej ligi i po jej zakończeniu trafia do archiwum._
 
 ## Marzec
 
@@ -74,26 +75,29 @@ Działające MVP backendowe:
 ### Tydzień 5–6 – Frontend i interfejs użytkownika
 
 - [x] Strona główna z listą meczów
-- [ ] Widok szczegółów meczu
+- [x] Lista rozgrywek i strona ligi z meczami (nadchodzące i zakończone)
+- [x] Widok szczegółów meczu (typ użytkownika, punkty, typy graczy po starcie meczu)
 - [x] Formularz typowania
-- [x] Widok rankingu
-- [ ] Responsywność aplikacji (jest Bootstrap, brak przeglądu na telefonie)
-- [ ] Filtrowanie meczów (sport, liga)
+- [x] Widok rankingu (na razie globalny)
+- [ ] Rankingi poszczególnych lig na stronie ligi (zamiast rankingu globalnego)
+- [x] Responsywność aplikacji
+- [ ] Filtrowanie meczów (częściowo: podział na ligi)
 
 ---
 
-### Tydzień 7 – System lig prywatnych
+### Tydzień 7 – System grup prywatnych
 
-- [x] Tworzenie prywatnych lig (w kodzie: `TypingGroup`)
-- [x] Dołączanie do ligi przez kod
-- [x] Ranking w obrębie ligi
-- [x] Archiwizacja grup po zakónczeniu sezonu (blokada dołączania)
-- [ ] Panel zarządzania ligą
+- [x] Tworzenie prywatnych grup (w kodzie: `TypingGroup`) z wyborem ligi
+- [x] Dołączanie do grupy przez kod
+- [x] Ranking w obrębie grupy (punkty tylko z meczów ligi grupy)
+- [x] Archiwizacja grup po zakończeniu sezonu (blokada dołączania)
+- [x] Panel zarządzania grupą (usuwanie członków, zmiana kodu, opuszczanie grupy)
 
 ---
 
 ### Tydzień 8 – Automatyzacja i API
 
+- [ ] Import drużyn i meczów z pliku CSV (komenda zarządzająca)
 - [ ] Integracja z zewnętrznym API sportowym (opcjonalnie)
 - [ ] Automatyczne pobieranie meczów
 - [ ] Wystawienie REST API (opcjonalnie)
@@ -102,9 +106,9 @@ Działające MVP backendowe:
 
 Rozbudowana aplikacja:
 
-- [ ] prywatne ligi
+- [x] prywatne grupy
 - [x] ranking globalny
-- [x] ligowy (globalny jest, ligowego brak)
+- [x] ranking ligowy (w grupie, liczony z meczów jej ligi)
 - [ ] dopracowany frontend
 - [ ] automatyzacja danych (opcjonalnie)
 
@@ -114,19 +118,20 @@ Rozbudowana aplikacja:
 
 ### Tydzień 9 – Testy
 
-- [ ] Testy jednostkowe modeli (częściowo: `is_locked`, `result`, punkty)
+- [ ] Testy jednostkowe modeli (częściowo: `is_locked`, `result`, punkty, walidacja meczu)
 - [x] Testy logiki punktacji
-- [ ] Testy widoków (częściowo: tylko `predict_view`)
+- [ ] Testy widoków (częściowo: typowanie, grupy, ligi, lista i szczegóły meczu)
 - [x] Weryfikacja poprawności naliczania punktów
 
 ---
 
 ### Tydzień 10 – Bezpieczeństwo
 
-- [ ] Walidacja danych wejściowych (częściowo: formularze Django)
+- [ ] Walidacja danych wejściowych (częściowo: formularze Django, `Match.clean`, unikalność drużyn w sporcie)
 - [x] Ochrona przed modyfikacją typów po starcie meczu
 - [x] Typy i punkty tylko do odczytu w panelu administratora
-- [ ] Kontrola uprawnień użytkowników (częściowo: `login_required`)
+- [x] Typy innych graczy ukryte do startu meczu
+- [ ] Kontrola uprawnień użytkowników (częściowo: `login_required`, strona grupy tylko dla członków, akcje właściciela grupy)
 
 ---
 

@@ -350,3 +350,10 @@ class MatchDetailViewTests(BaseTestCase):
         self.match.save()
         response = self.client.get(self.url)
         self.assertEqual(response.context["predictions"].count(), 1)
+
+class MatchListViewTests(BaseTestCase):
+    def test_match_list_renders_with_links_to_details(self):
+        self.client.login(username="tester", password="haslo-testowe-123")
+        response = self.client.get(reverse("typer:match_list"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, reverse("typer:match_detail", args=[self.match.id]))
