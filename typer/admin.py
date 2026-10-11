@@ -25,6 +25,12 @@ class PointsAdmin(admin.ModelAdmin):
     def has_change_permission(self, request, obj=None):
         return False
 
+@admin.register(Team)
+class TeamAdmin(admin.ModelAdmin):
+    list_display = ("name", "sport")
+    list_filter = ("sport",)
+    search_fields = ("name",)
+
 class TypingGroupMemberInline(admin.TabularInline):
     model = TypingGroupMember
     extra = 1
@@ -36,7 +42,6 @@ class TypingGroupAdmin(admin.ModelAdmin):
 
 admin.site.register(User, UserAdmin)
 admin.site.register(Sport)
-admin.site.register(Team)
 admin.site.register(League)
 admin.site.register(TypingGroup, TypingGroupAdmin)
 admin.site.register(TypingGroupMember)

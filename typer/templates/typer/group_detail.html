@@ -1,11 +1,13 @@
 {% extends "typer/base.html" %}
 
 {% block title %}{{ group.name }} — Omega 3 Typer{% endblock %}
-<p class="text-muted">Liga: {{ group.league }}
-  {% if not group.is_active %}<span class="badge bg-secondary">Sezon zakończony</span>{% endif %}
-</p>
+
 {% block content %}
     <h2 class="mb-1">{{ group.name }}</h2>
+    <p class="text-muted mb-1">
+        Liga: {{ group.league }}
+        {% if not group.is_active %}<span class="badge bg-secondary">Sezon zakończony</span>{% endif %}
+    </p>
     <p class="text-muted">Właściciel: {{ group.owner|default:"brak" }}</p>
 
     {% if group.invite_code %}
@@ -13,15 +15,25 @@
             Kod zaproszenia: <strong>{{ group.invite_code }}</strong><br>
             <small>Przekaż go znajomym, żeby mogli dołączyć do grupy.</small>
         </div>
+        {% if is_owner and group.is_private %}
+            <form method="post" action="{% url 'typer:group_regenerate_code' group.id %}" class="d-inline">
+                {% csrf_token %}
+                <button class="btn btn-sm btn-outline-secondary"
+                        onclick="return confirm('Stary kod przestanie działać. Kontynuować?')">Nowy kod
+                </button>
+            </form>
+        {% endif %}
     {% endif %}
 
     <h4 class="mt-4">Ranking grupy</h4>
-    <table class="table table-striped">
+    <table class="table table-striped align-middle">
         <thead>
         <tr>
             <th>#</th>
             <th>Użytkownik</th>
             <th class="text-end">Punkty</th>
+            {% if is_owner %}
+                <th></th>{% endif %}
         </tr>
         </thead>
         <tbody>
@@ -33,10 +45,31 @@
                     {% if u == group.owner %}<span class="badge bg-secondary">Administrator grupy</span>{% endif %}
                 </td>
                 <td class="text-end">{{ u.total_points }}</td>
+                {% if is_owner %}
+                    <td class="text-end">
+                        {% if u != user %}
+                            <form method="post" action="{% url 'typer:group_remove_member' group.id u.id %}">
+                                {% csrf_token %}
+                                <button class="btn btn-sm btn-outline-danger"
+                                        onclick="return confirm('Usunąć {{ u.username|escapejs }} z grupy?')">Usuń
+                                </button>
+                            </form>
+                        {% endif %}
+                    </td>
+                {% endif %}
             </tr>
         {% endfor %}
         </tbody>
     </table>
+
+    {% if not is_owner %}
+        <form method="post" action="{% url 'typer:group_leave' group.id %}" class="mt-4">
+            {% csrf_token %}
+            <button class="btn btn-outline-danger"
+                    onclick="return confirm('Na pewno opuścić grupę?')">Opuść grupę
+            </button>
+        </form>
+    {% endif %}
 
     <p class="mt-4"><a href="{% url 'typer:group_list' %}">Wróć do listy grup</a></p>
 {% endblock %}

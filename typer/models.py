@@ -1,6 +1,7 @@
 import secrets
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 from .constants import POINTS_WINNER, POINTS_GOAL_DIFFERENCE, POINTS_EXACT_SCORE, NO_POINTS
 
@@ -22,6 +23,9 @@ class Sport(models.Model):
 class Team(models.Model):
     name = models.CharField(max_length=100)
     sport = models.ForeignKey(Sport, on_delete=models.CASCADE, related_name="teams")
+
+    class Meta:
+        unique_together = ("sport", "name")
 
     def __str__(self):
         return self.name
@@ -136,6 +140,14 @@ class Match(models.Model):
         ):
             for prediction in self.predictions.all():
                 prediction.calculate_points()
+
+    def clean(self):
+        if self.home_team_id and self.away_team_id and self.league_id:
+            if self.home_team_id == self.away_team_id:
+                raise ValidationError("Gospodarz i gość nie mogą być tą samą drużyną.")
+            sport_id = self.league.sport_id
+            if self.home_team.sport_id != sport_id or self.away_team.sport_id != sport_id:
+                raise ValidationError("Drużyny muszą grać w tym samym sporcie co liga.")
 
     @property
     def is_locked(self):

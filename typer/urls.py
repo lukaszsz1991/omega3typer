@@ -18,4 +18,8 @@ urlpatterns = [
     path('groups/join/', views.group_join_view, name='group_join'),
     path("leagues/", views.league_list_view, name="league_list"),
     path("leagues/<int:league_id>/", views.league_detail_view, name="league_detail"),
+    path("groups/<int:group_id>/leave/", views.group_leave_view, name="group_leave"),
+    path("groups/<int:group_id>/regenerate-code/", views.group_regenerate_code_view, name="group_regenerate_code"),
+    path("groups/<int:group_id>/members/<int:user_id>/remove/", views.group_remove_member_view,
+         name="group_remove_member"),
 ]

@@ -1,4 +1,6 @@
 from datetime import date, timedelta
+
+from django.core.exceptions import ValidationError
 from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -211,6 +213,46 @@ class TypingGroupViewTests(BaseTestCase):
         self.other_client.post(reverse("typer:group_join"), {"code": group.invite_code})
         self.assertNotIn(self.other, group.members.all())
 
+    def join(self, group):
+        self.other_client.post(reverse("typer:group_join"), {"code": group.invite_code})
+
+    def test_owner_can_remove_member(self):
+        group = self.create_group()
+        self.join(group)
+        self.client.post(reverse("typer:group_remove_member", args=[group.id, self.other.id]))
+        self.assertNotIn(self.other, group.members.all())
+
+    def test_non_owner_cannot_remove_member(self):
+        group = self.create_group()
+        self.join(group)
+        response = self.other_client.post(reverse("typer:group_remove_member", args=[group.id, self.user.id]))
+        self.assertEqual(response.status_code, 404)
+        self.assertIn(self.user, group.members.all())
+
+    def test_owner_cannot_leave_group(self):
+        group = self.create_group()
+        self.client.post(reverse("typer:group_leave", args=[group.id]))
+        self.assertIn(self.user, group.members.all())
+
+    def test_member_can_leave_group(self):
+        group = self.create_group()
+        self.join(group)
+        self.other_client.post(reverse("typer:group_leave", args=[group.id]))
+        self.assertNotIn(self.other, group.members.all())
+
+    def test_owner_can_regenerate_code(self):
+        group = self.create_group()
+        old_code = group.invite_code
+        self.client.post(reverse("typer:group_regenerate_code", args=[group.id]))
+        group.refresh_from_db()
+        self.assertNotEqual(group.invite_code, old_code)
+
+    def test_non_owner_cannot_regenerate_code(self):
+        group = self.create_group()
+        self.join(group)
+        response = self.other_client.post(reverse("typer:group_regenerate_code", args=[group.id]))
+        self.assertEqual(response.status_code, 404)
+
 
 class GroupRankingTests(BaseTestCase):
     def setUp(self):
@@ -279,3 +321,9 @@ class LeagueViewTests(BaseTestCase):
         response = self.client.get(reverse("typer:league_detail", args=[self.league.id]))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(list(response.context["upcoming"]), [self.match])
+
+class MatchCleanTests(BaseTestCase):
+    def test_same_team_on_both_sides_is_invalid(self):
+        self.match.away_team = self.match.home_team
+        with self.assertRaises(ValidationError):
+            self.match.clean()

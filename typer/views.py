@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.shortcuts import get_object_or_404
 from django.db.models import Sum, Q
 from django.http import HttpRequest, HttpResponse
+from django.views.decorators.http import require_POST
 from .models import League, Match, Prediction, User, TypingGroup, TypingGroupMember
 from .forms import RegistrationForm, PredictionForm, TypingGroupForm, JoinGroupForm
 
@@ -108,7 +109,7 @@ def group_detail_view(request: HttpRequest, group_id: int) -> HttpResponse:
                                           filter=Q(predictions__match__league=group.league),
                                           default=0))
                .order_by("-total_points", "username"))
-    return render(request, "typer/group_detail.html", {"group": group, "ranking": ranking})
+    return render(request, "typer/group_detail.html", {"group": group, "ranking": ranking, "is_owner": group.owner_id == request.user.id})
 
 
 @login_required
@@ -152,3 +153,36 @@ def league_detail_view(request: HttpRequest, league_id: int) -> HttpResponse:
         "upcoming": upcoming,
         "finished": finished,
     })
+
+@login_required
+@require_POST
+def group_remove_member_view(request, group_id, user_id):
+    group = get_object_or_404(TypingGroup, pk=group_id, owner=request.user)
+    if user_id == request.user.id:
+        messages.error(request, "Właściciel nie może usunąć samego siebie.")
+    else:
+        deleted, _ = TypingGroupMember.objects.filter(group=group, user_id=user_id).delete()
+        if deleted:
+            messages.success(request, "Usunięto członka grupy.")
+    return redirect("typer:group_detail", group_id=group.id)
+
+
+@login_required
+@require_POST
+def group_regenerate_code_view(request, group_id):
+    group = get_object_or_404(TypingGroup, pk=group_id, owner=request.user, is_private=True)
+    group.regenerate_invite_code()
+    messages.success(request, "Wygenerowano nowy kod zaproszenia. Stary kod już nie działa.")
+    return redirect("typer:group_detail", group_id=group.id)
+
+
+@login_required
+@require_POST
+def group_leave_view(request, group_id):
+    group = get_object_or_404(TypingGroup, pk=group_id, members=request.user)
+    if group.owner_id == request.user.id:
+        messages.error(request, "Właściciel nie może opuścić grupy.")
+        return redirect("typer:group_detail", group_id=group.id)
+    TypingGroupMember.objects.filter(group=group, user=request.user).delete()
+    messages.success(request, f"Opuściłeś grupę „{group.name}”.")
+    return redirect("typer:group_list")
