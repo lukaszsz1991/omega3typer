@@ -86,7 +86,8 @@ Działające MVP backendowe:
 
 - [x] Tworzenie prywatnych lig (w kodzie: `TypingGroup`)
 - [x] Dołączanie do ligi przez kod
-- [ ] Ranking w obrębie ligi
+- [x] Ranking w obrębie ligi
+- [x] Archiwizacja grup po zakónczeniu sezonu (blokada dołączania)
 - [ ] Panel zarządzania ligą
 
 ---
@@ -103,7 +104,7 @@ Rozbudowana aplikacja:
 
 - [ ] prywatne ligi
 - [x] ranking globalny
-- [ ] ligowy (globalny jest, ligowego brak)
+- [x] ligowy (globalny jest, ligowego brak)
 - [ ] dopracowany frontend
 - [ ] automatyzacja danych (opcjonalnie)
 
@@ -124,6 +125,7 @@ Rozbudowana aplikacja:
 
 - [ ] Walidacja danych wejściowych (częściowo: formularze Django)
 - [x] Ochrona przed modyfikacją typów po starcie meczu
+- [x] Typy i punkty tylko do odczytu w panelu administratora
 - [ ] Kontrola uprawnień użytkowników (częściowo: `login_required`)
 
 ---

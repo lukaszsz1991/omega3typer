@@ -1,7 +1,9 @@
 {% extends "typer/base.html" %}
 
 {% block title %}{{ group.name }} — Omega 3 Typer{% endblock %}
-
+<p class="text-muted">Liga: {{ group.league }}
+  {% if not group.is_active %}<span class="badge bg-secondary">Sezon zakończony</span>{% endif %}
+</p>
 {% block content %}
     <h2 class="mb-1">{{ group.name }}</h2>
     <p class="text-muted">Właściciel: {{ group.owner|default:"brak" }}</p>

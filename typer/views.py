@@ -3,7 +3,7 @@ from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.shortcuts import get_object_or_404
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from django.http import HttpRequest, HttpResponse
 from .models import League, Match, Prediction, User, TypingGroup, TypingGroupMember
 from .forms import RegistrationForm, PredictionForm, TypingGroupForm, JoinGroupForm
@@ -73,9 +73,11 @@ def ranking_view(request: HttpRequest) -> HttpResponse:
 
 
 @login_required
-def group_list_view(request: HttpRequest) -> HttpResponse:
-    groups = request.user.typing_groups.all().order_by("name")
-    return render(request, "typer/group_list.html", {"groups": groups})
+def group_list_view(request):
+    groups = request.user.typing_groups.select_related("league")
+    active = [g for g in groups if g.is_active]
+    archived = [g for g in groups if not g.is_active]
+    return render(request, "typer/group_list.html", {"active": active, "archived": archived})
 
 
 @login_required
@@ -98,8 +100,13 @@ def group_create_view(request: HttpRequest) -> HttpResponse:
 @login_required
 def group_detail_view(request: HttpRequest, group_id: int) -> HttpResponse:
     group = get_object_or_404(TypingGroup, pk=group_id, members=request.user)
+    if not group.is_active:
+        messages.error(request, "Sezon tej ligi już się zakończył.")
+        return redirect("typer:group_list")
     ranking = (group.members
-               .annotate(total_points=Sum("predictions__points__points_awarded", default=0))
+               .annotate(total_points=Sum("predictions__points__points_awarded",
+                                          filter=Q(predictions__match__league=group.league),
+                                          default=0))
                .order_by("-total_points", "username"))
     return render(request, "typer/group_detail.html", {"group": group, "ranking": ranking})
 
@@ -113,6 +120,9 @@ def group_join_view(request: HttpRequest) -> HttpResponse:
             group = TypingGroup.objects.filter(invite_code=code).first()
             if group is None:
                 form.add_error("code", "Nieprawidłowy kod zaproszenia.")
+            elif not group.is_active:
+                messages.error(request, "Nie można dołączyć do grupy, której sezon rozgrywkowy się zakończył.")
+                return redirect("typer:group_list")
             else:
                 _, created = TypingGroupMember.objects.get_or_create(
                     user=request.user, group=group

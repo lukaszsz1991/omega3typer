@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import date, timedelta
 from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -18,10 +18,14 @@ class BaseTestCase(TestCase):
 
     def setUp(self):
         self.user = User.objects.create_user(username="tester", password="haslo-testowe-123")
-        sport = Sport.objects.create(name="Piłka nożna")
-        self.home = Team.objects.create(name="Drużyna A", sport=sport)
-        self.away = Team.objects.create(name="Drużyna B", sport=sport)
-        self.league = League.objects.create(name="Liga testowa", sport=sport)
+        self.sport = Sport.objects.create(name="Piłka nożna")
+        self.home = Team.objects.create(name="Drużyna A", sport=self.sport)
+        self.away = Team.objects.create(name="Drużyna B", sport=self.sport)
+        self.league = League.objects.create(
+            name="Test Liga", sport=self.sport,
+            year=date.today().year + 1,
+            end_date=date.today() + timedelta(days=365),
+        )
         self.match = Match.objects.create(
             league=self.league,
             home_team=self.home,
@@ -159,7 +163,7 @@ class TypingGroupViewTests(BaseTestCase):
         self.other_client.login(username="drugi", password="haslo-testowe-123")
 
     def create_group(self):
-        self.client.post(reverse("typer:group_create"), {"name": "Znajomi"})
+        self.client.post(reverse("typer:group_create"), {"name": "Znajomi", "league": self.league.id})
         return TypingGroup.objects.get(name="Znajomi")
 
     def test_create_group_sets_owner_member_and_code(self):
@@ -200,13 +204,20 @@ class TypingGroupViewTests(BaseTestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(group.members.count(), 1)
 
+    def test_cannot_join_group_of_finished_league(self):
+        group = self.create_group()
+        self.league.end_date = date.today() - timedelta(days=1)
+        self.league.save()
+        self.other_client.post(reverse("typer:group_join"), {"code": group.invite_code})
+        self.assertNotIn(self.other, group.members.all())
+
 
 class GroupRankingTests(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.friend = User.objects.create_user(username="kolega", password="haslo-testowe-123")
         self.outsider = User.objects.create_user(username="obcy", password="haslo-testowe-123")
-        self.group = TypingGroup.objects.create(name="Znajomi", is_private=True, owner=self.user)
+        self.group = TypingGroup.objects.create(name="Znajomi", is_private=True, owner=self.user, league=self.league)
         TypingGroupMember.objects.create(user=self.user, group=self.group)
         TypingGroupMember.objects.create(user=self.friend, group=self.group)
         self.client.login(username="tester", password="haslo-testowe-123")
@@ -238,6 +249,25 @@ class GroupRankingTests(BaseTestCase):
         self.finish(2, 1)
         names = [u.username for u in self.ranking()]
         self.assertNotIn("obcy", names)
+
+    def test_points_from_other_leagues_are_not_counted(self):
+        other_league = League.objects.create(
+            name="Inna liga", sport=self.sport,
+            year=date.today().year + 1,
+            end_date=date.today() + timedelta(days=300),
+        )
+        other_match = Match.objects.create(
+            league=other_league, home_team=self.home, away_team=self.away,
+            scheduled_at=timezone.now() + timedelta(days=1),
+        )
+        Prediction.objects.create(
+            user=self.user, match=other_match, predicted_home=1, predicted_away=0
+        )
+        other_match.home_score, other_match.away_score = 1, 0
+        other_match.status = Match.Status.FINISHED
+        other_match.save()
+
+        self.assertTrue(all(u.total_points == 0 for u in self.ranking()))
 
 
 class LeagueViewTests(BaseTestCase):

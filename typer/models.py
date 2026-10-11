@@ -4,6 +4,7 @@ from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
 from .constants import POINTS_WINNER, POINTS_GOAL_DIFFERENCE, POINTS_EXACT_SCORE, NO_POINTS
 
+
 class User(AbstractUser):
     avatar = models.ImageField(upload_to="avatars/", blank=True, null=True)
 
@@ -25,15 +26,27 @@ class Team(models.Model):
     def __str__(self):
         return self.name
 
+
 class League(models.Model):
     name = models.CharField(max_length=100)
     sport = models.ForeignKey(Sport, on_delete=models.CASCADE, related_name="leagues")
+    year = models.PositiveSmallIntegerField()
+    end_date = models.DateField()
+
+    class Meta:
+        unique_together = ("name", "year")
 
     def __str__(self):
-        return self.name
+        return f"{self.name} {self.year}"
+
+    @property
+    def is_finished(self):
+        return self.end_date < timezone.localdate()
+
 
 class TypingGroup(models.Model):
     name = models.CharField(max_length=100)
+    league = models.ForeignKey(League, on_delete=models.PROTECT, related_name="groups")
     is_private = models.BooleanField(default=False)
     invite_code = models.CharField(max_length=20, unique=True, blank=True, null=True)
 
@@ -54,6 +67,14 @@ class TypingGroup(models.Model):
     def __str__(self):
         return self.name
 
+    @property
+    def is_active(self):
+        return not self.league.is_finished
+
+    def regenerate_invite_code(self):
+        self.invite_code = secrets.token_urlsafe(8)[:20]
+        self.save(update_fields=["invite_code"])
+
 
 class TypingGroupMember(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -66,12 +87,14 @@ class TypingGroupMember(models.Model):
     def __str__(self):
         return f"{self.user} w {self.group}"
 
+
 def outcome(home, away):
     if home > away:
         return "home"
     if away > home:
         return "away"
     return "draw"
+
 
 class Match(models.Model):
     class Status(models.TextChoices):
@@ -107,9 +130,9 @@ class Match(models.Model):
                 self.result = self.Result.DRAW
         super().save(*args, **kwargs)
         if (
-            self.status == self.Status.FINISHED
-            and self.home_score is not None
-            and self.away_score is not None
+                self.status == self.Status.FINISHED
+                and self.home_score is not None
+                and self.away_score is not None
         ):
             for prediction in self.predictions.all():
                 prediction.calculate_points()

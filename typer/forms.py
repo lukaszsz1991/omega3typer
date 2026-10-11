@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from .models import User, Prediction, TypingGroup
+from django.utils import timezone
+from .models import User, Prediction, League, TypingGroup, Sport
 
 
 class RegistrationForm(UserCreationForm):
@@ -9,6 +10,7 @@ class RegistrationForm(UserCreationForm):
     class Meta:
         model = User
         fields = ('username', 'email', 'password1', 'password2')
+
 
 class PredictionForm(forms.ModelForm):
     class Meta:
@@ -23,12 +25,28 @@ class PredictionForm(forms.ModelForm):
             "predicted_away": forms.NumberInput(attrs={'class': 'form-control', "min": 0}),
         }
 
+
 class TypingGroupForm(forms.ModelForm):
     class Meta:
         model = TypingGroup
-        fields = ["name"]
-        labels = {"name": "Nazwa grupy"}
-        widgets = {"name": forms.TextInput(attrs={'class': 'form-control'})}
+        fields = ["name", "league"]
+        labels = {"name": "Nazwa grupy", "league": "Rozgrywki"}
+        help_texts = {"league": "Wyniki meczóe tych rozgrywek będą liczone w rankingu grupy."}
+        widgets = {
+            "name": forms.TextInput(attrs={'class': 'form-control'}),
+            "league": forms.Select(attrs={'class': 'select'}), }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['league'].queryset = (
+            League.objects.filter(end_date__gte=timezone.localdate()).select_related("sport").
+            order_by("sport__name", "name")
+        )
+        self.fields['league'].empty_label = "Wybierz rozgrywki"
+        self.fields['league'].label_from_instance = (
+            lambda league: f"{league.name} {league.year}({league.sport.name})"
+        )
+
 
 class JoinGroupForm(forms.Form):
     code = forms.CharField(

@@ -1,17 +1,46 @@
 {% extends "typer/base.html" %}
-
-{% block title %}Nowa grupa — Omega 3 Typer{% endblock %}
+{% block title %}Nowa grupa – Omega 3 Typer{% endblock %}
 
 {% block content %}
-<h2 class="mb-3">Nowa grupa</h2>
-<form method="post" class="col-md-4">
-    {% csrf_token %}
-    <div class="mb-3">
-        {{ form.name.label_tag }}
-        {{ form.name }}
-        {{ form.name.errors }}
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <h1 class="h3 mb-4">Nowa grupa</h1>
+
+            <form method="post" novalidate>
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+                {% endif %}
+
+                <div class="mb-3">
+                    <label for="{{ form.name.id_for_label }}" class="form-label">{{ form.name.label }}</label>
+                    {{ form.name }}
+                    {% for error in form.name.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.league.id_for_label }}" class="form-label">{{ form.league.label }}</label>
+                    {{ form.league }}
+                    {% if form.league.help_text %}
+                        <div class="form-text">{{ form.league.help_text }}</div>
+                    {% endif %}
+                    {% for error in form.league.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                {% if not form.fields.league.queryset.exists %}
+                    <div class="alert alert-warning">
+                        Brak aktywnych rozgrywek. Poproś administratora o dodanie ligi.
+                    </div>
+                {% endif %}
+
+                <button type="submit" class="btn btn-primary">Utwórz grupę</button>
+                <a href="{% url 'typer:group_list' %}" class="btn btn-outline-secondary">Anuluj</a>
+            </form>
+        </div>
     </div>
-    <button type="submit" class="btn btn-primary">Utwórz</button>
-    <a href="{% url 'typer:group_list' %}" class="btn btn-link">Anuluj</a>
-</form>
 {% endblock %}

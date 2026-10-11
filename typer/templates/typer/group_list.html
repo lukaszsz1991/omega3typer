@@ -11,12 +11,21 @@
         </div>
     </div>
     <div class="list-group">
-        {% for group in groups %}
+        <h2 class="h5">Aktywne</h2>
+        {% for group in active %}
             <a href="{% url 'typer:group_detail' group.id %}" class="list-group-item list-group-item-action">
-                {{ group.name }}
+                {{ group.name }} <small class="text-muted">{{ group.league }}</small>
             </a>
-        {% empty %}
-            <div class="list-group-item text-muted">Nie należysz jeszcze do żadnej grupy.</div>
-        {% endfor %}
+        {% empty %}<p class="text-muted">Brak aktywnych grup.</p>{% endfor %}
+
+        {% if archived %}
+            <h2 class="h5 mt-4">Archiwum</h2>
+            {% for group in archived %}
+                <a href="{% url 'typer:group_detail' group.id %}"
+                   class="list-group-item list-group-item-action text-muted">
+                    {{ group.name }} <small>{{ group.league }}</small>
+                </a>
+            {% endfor %}
+        {% endif %}
     </div>
 {% endblock %}
