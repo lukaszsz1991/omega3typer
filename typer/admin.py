@@ -3,6 +3,28 @@ from django.contrib.auth.admin import UserAdmin
 from .models import User, Sport, Team, League, TypingGroup, TypingGroupMember, Match, Prediction, Points
 
 
+@admin.register(Prediction)
+class PredictionAdmin(admin.ModelAdmin):
+    list_display = ("user", "match")
+    list_filter = ("match__league",)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+@admin.register(Points)
+class PointsAdmin(admin.ModelAdmin):
+    list_display = ("prediction", "points_awarded")
+    list_filter = ("prediction__match__league",)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
 class TypingGroupMemberInline(admin.TabularInline):
     model = TypingGroupMember
     extra = 1
@@ -19,5 +41,3 @@ admin.site.register(League)
 admin.site.register(TypingGroup, TypingGroupAdmin)
 admin.site.register(TypingGroupMember)
 admin.site.register(Match)
-admin.site.register(Prediction)
-admin.site.register(Points)
