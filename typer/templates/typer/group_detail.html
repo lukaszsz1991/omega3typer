@@ -1,0 +1,27 @@
+{% extends "typer/base.html" %}
+
+{% block title %}{{ group.name }} — Omega 3 Typer{% endblock %}
+
+{% block content %}
+<h2 class="mb-1">{{ group.name }}</h2>
+<p class="text-muted">Właściciel: {{ group.owner|default:"brak" }}</p>
+
+{% if group.invite_code %}
+    <div class="alert alert-info">
+        Kod zaproszenia: <strong>{{ group.invite_code }}</strong><br>
+        <small>Przekaż go znajomym, żeby mogli dołączyć do grupy.</small>
+    </div>
+{% endif %}
+
+<h4 class="mt-4">Członkowie</h4>
+<ul class="list-group col-md-6">
+    {% for m in memberships %}
+        <li class="list-group-item d-flex justify-content-between">
+            <span>{{ m.user.username }}{% if m.user == group.owner %} (właściciel){% endif %}</span>
+            <small class="text-muted">od {{ m.joined_at|date:"d.m.Y" }}</small>
+        </li>
+    {% endfor %}
+</ul>
+
+<p class="mt-4"><a href="{% url 'typer:group_list' %}">Wróć do listy grup</a></p>
+{% endblock %}

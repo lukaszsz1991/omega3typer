@@ -2,7 +2,7 @@
 
 ## Aplikacja webowa do typowania wyników wydarzeń sportowych (Django)
 
-_Stan na 10.10.2026. Zaznaczone `[x]` = zrobione, `[ ]` = do zrobienia._
+_Stan na 11.10.2026._
 
 ## Marzec
 
@@ -84,7 +84,7 @@ Działające MVP backendowe:
 
 ### Tydzień 7 – System lig prywatnych
 
-- [ ] Tworzenie prywatnych lig (w kodzie: `TypingGroup`)
+- [x] Tworzenie prywatnych lig (w kodzie: `TypingGroup`)
 - [ ] Dołączanie do ligi przez kod
 - [ ] Ranking w obrębie ligi
 - [ ] Panel zarządzania ligą

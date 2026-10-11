@@ -41,6 +41,11 @@ class TypingGroup(models.Model):
         User, through="TypingGroupMember", related_name="typing_groups"
     )
 
+    owner = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="owned_groups",
+        null=True, blank=True,
+    )
+
     def save(self, *args, **kwargs):
         if self.is_private and not self.invite_code:
             self.invite_code = secrets.token_urlsafe(8)[:20]

@@ -12,4 +12,7 @@ urlpatterns = [
     path('matches/<int:match_id>/predict/', views.predict_view, name='predict'),
     path('', views.home_view, name='home'),
     path('ranking/', views.ranking_view, name='ranking'),
+    path('groups/', views.group_list_view, name='group_list'),
+    path('groups/new/', views.group_create_view, name='group_create'),
+    path('groups/<int:group_id>/', views.group_detail_view, name='group_detail'),
 ]

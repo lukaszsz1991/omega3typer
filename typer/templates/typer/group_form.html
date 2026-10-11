@@ -1,0 +1,17 @@
+{% extends "typer/base.html" %}
+
+{% block title %}Nowa grupa — Omega 3 Typer{% endblock %}
+
+{% block content %}
+<h2 class="mb-3">Nowa grupa</h2>
+<form method="post" class="col-md-4">
+    {% csrf_token %}
+    <div class="mb-3">
+        {{ form.name.label_tag }}
+        {{ form.name }}
+        {{ form.name.errors }}
+    </div>
+    <button type="submit" class="btn btn-primary">Utwórz</button>
+    <a href="{% url 'typer:group_list' %}" class="btn btn-link">Anuluj</a>
+</form>
+{% endblock %}

@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from .models import User, Prediction
+from .models import User, Prediction, TypingGroup
+
 
 class RegistrationForm(UserCreationForm):
     email = forms.EmailField(required=True)
@@ -21,3 +22,10 @@ class PredictionForm(forms.ModelForm):
             "predicted_home": forms.NumberInput(attrs={'class': 'form-control', "min": 0}),
             "predicted_away": forms.NumberInput(attrs={'class': 'form-control', "min": 0}),
         }
+
+class TypingGroupForm(forms.ModelForm):
+    class Meta:
+        model = TypingGroup
+        fields = ["name"]
+        labels = {"name": "Nazwa grupy"}
+        widgets = {"name": forms.TextInput(attrs={'class': 'form-control'})}
