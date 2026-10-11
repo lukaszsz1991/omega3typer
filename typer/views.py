@@ -3,7 +3,7 @@ from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.shortcuts import get_object_or_404
-from django.db.models import Sum, Q
+from django.db.models import Sum, Q, F
 from django.http import HttpRequest, HttpResponse
 from django.views.decorators.http import require_POST
 from .models import League, Match, Prediction, User, TypingGroup, TypingGroupMember
@@ -186,3 +186,24 @@ def group_leave_view(request, group_id):
     TypingGroupMember.objects.filter(group=group, user=request.user).delete()
     messages.success(request, f"Opuściłeś grupę „{group.name}”.")
     return redirect("typer:group_list")
+
+@login_required
+def match_detail_view(request: HttpRequest, match_id: int) -> HttpResponse:
+    match = get_object_or_404(
+        Match.objects.select_related("league", "home_team", "away_team"), pk=match_id
+    )
+    my_prediction = (
+        Prediction.objects.filter(user=request.user, match=match)
+        .select_related("points").first()
+    )
+    predictions = None
+    if match.is_locked:
+        predictions = (
+            match.predictions.select_related("user", "points")
+            .order_by(F("points__points_awarded").desc(nulls_last=True), "user__username")
+        )
+    return render(request, "typer/match_detail.html", {
+        "match": match,
+        "my_prediction": my_prediction,
+        "predictions": predictions,
+    })

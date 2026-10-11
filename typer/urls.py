@@ -22,4 +22,5 @@ urlpatterns = [
     path("groups/<int:group_id>/regenerate-code/", views.group_regenerate_code_view, name="group_regenerate_code"),
     path("groups/<int:group_id>/members/<int:user_id>/remove/", views.group_remove_member_view,
          name="group_remove_member"),
+    path("matches/<int:match_id>/", views.match_detail_view, name="match_detail"),
 ]

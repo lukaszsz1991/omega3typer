@@ -327,3 +327,26 @@ class MatchCleanTests(BaseTestCase):
         self.match.away_team = self.match.home_team
         with self.assertRaises(ValidationError):
             self.match.clean()
+
+class MatchDetailViewTests(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        self.other = User.objects.create_user(username="drugi", password="haslo-testowe-123")
+        Prediction.objects.create(user=self.other, match=self.match, predicted_home=1, predicted_away=0)
+        self.client.login(username="tester", password="haslo-testowe-123")
+        self.url = reverse("typer:match_detail", args=[self.match.id])
+
+    def test_anonymous_user_is_redirected(self):
+        self.client.logout()
+        self.assertEqual(self.client.get(self.url).status_code, 302)
+
+    def test_other_predictions_hidden_before_match_start(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(response.context["predictions"])
+
+    def test_other_predictions_visible_after_match_start(self):
+        self.match.scheduled_at = timezone.now() - timedelta(minutes=1)
+        self.match.save()
+        response = self.client.get(self.url)
+        self.assertEqual(response.context["predictions"].count(), 1)
