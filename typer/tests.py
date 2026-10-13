@@ -1,6 +1,7 @@
+import os, tempfile
 from datetime import date, timedelta
-
 from django.core.exceptions import ValidationError
+from django.core.management import call_command
 from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -357,3 +358,19 @@ class MatchListViewTests(BaseTestCase):
         response = self.client.get(reverse("typer:match_list"))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, reverse("typer:match_detail", args=[self.match.id]))
+
+class ImportMatchesTests(BaseTestCase):
+    def test_import_creates_match_and_is_idempotent(self):
+        with tempfile.NamedTemporaryFile(
+            "w", suffix=".csv", delete=False, encoding="utf-8", newline=""
+        ) as f:
+            f.write("league,year,home_team,away_team,scheduled_at,home_score,away_score\n")
+            f.write(f"{self.league.name},{self.league.year},Nowa A,Nowa B,2030-01-01 18:00,2,1\n")
+        self.addCleanup(os.unlink, f.name)
+
+        call_command("import_matches", f.name)
+        call_command("import_matches", f.name)  # drugi raz nie dubluje
+
+        matches = Match.objects.filter(home_team__name="Nowa A")
+        self.assertEqual(matches.count(), 1)
+        self.assertEqual(matches.first().result, Match.Result.HOME)

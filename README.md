@@ -46,6 +46,14 @@ Panel administratora: <http://127.0.0.1:8000/admin/>
 ```bash
 python manage.py test
 ```
+## Import meczów z CSV
+
+```bash
+python manage.py import_matches data/mecze.csv
+```
+
+Kolumny: `league, year, home_team, away_team, scheduled_at, home_score, away_score`.
+Liga musi istnieć w panelu (nazwa i rok, flaga w nazwie jest pomijana). Ponowny import aktualizuje istniejące mecze i dopisuje wyniki.
 
 ## Plan prac
 
