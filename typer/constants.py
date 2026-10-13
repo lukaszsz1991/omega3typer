@@ -6,3 +6,5 @@ NO_POINTS = 0
 # Wyświetlanie listy meczów
 UPCOMING_DAYS = 10
 FINISHED_LIMIT = 20
+# Wyświetlanie rankingów globalnych
+RANKING_PREVIEW = 5

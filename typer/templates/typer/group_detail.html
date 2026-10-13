@@ -39,7 +39,7 @@
         <tbody>
         {% for u in ranking %}
             <tr {% if u == user %}class="table-primary"{% endif %}>
-                <td>{{ forloop.counter }}</td>
+                <td>{{ u.rank }}</td>
                 <td>
                     {{ u.username }}
                     {% if u == group.owner %}<span class="badge bg-secondary">Administrator grupy</span>{% endif %}

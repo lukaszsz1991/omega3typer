@@ -101,7 +101,7 @@ Działające MVP backendowe:
 
 - [x] Import drużyn i meczów z pliku CSV (komenda zarządzająca)
 - [ ] Integracja z zewnętrznym API sportowym (opcjonalnie)
-- [ ] Automatyczne pobieranie meczów
+- [ ] Automatyczne pobieranie meczów (opcjonalnie)
 - [ ] Wystawienie REST API (opcjonalnie)
 
 ### Kamień milowy #2

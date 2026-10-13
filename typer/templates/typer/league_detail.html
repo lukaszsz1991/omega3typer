@@ -3,7 +3,31 @@
 
 {% block content %}
     <h1 class="h3 mb-4">{{ league.name }} <small class="text-muted">{{ league.sport.name }}</small></h1>
-
+    <h3 class="mb-3">Ranking ligi</h3>
+    <div class="table-responsive mb-5">
+        <table class="table table-striped align-middle">
+            <thead>
+            <tr>
+                <th style="width: 3rem;">#</th>
+                <th>Użytkownik</th>
+                <th class="text-end">Punkty</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for u in ranking %}
+                <tr {% if u == user %}class="table-primary"{% endif %}>
+                    <td>{{ u.rank }}</td>
+                    <td>{{ u.username }}{% if u == user %} <span class="badge bg-primary ms-1">Ty</span>{% endif %}</td>
+                    <td class="text-end fw-bold">{{ u.total_points }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="3" class="text-muted">Brak rozliczonych typów w tej lidze.</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
     <h2 class="h5">Nadchodzące mecze</h2>
     <ul class="list-group mb-4">
         {% for m in upcoming %}

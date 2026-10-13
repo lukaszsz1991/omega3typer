@@ -3,25 +3,61 @@
 {% block title %}Ranking — Omega 3 Typer{% endblock %}
 
 {% block content %}
-<h2 class="mb-3">Ranking globalny</h2>
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>#</th>
-            <th>Użytkownik</th>
-            <th class="text-end">Punkty</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for u in users %}
-            <tr {% if u == user %}class="table-primary"{% endif %}>
-                <td>{{ forloop.counter }}</td>
-                <td>{{ u.username }}</td>
-                <td class="text-end">{{ u.total_points }}</td>
+    <h2 class="mb-3">Ranking globalny</h2>
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+            <tr>
+                <th style="width: 3rem;">#</th>
+                <th>Użytkownik</th>
+                <th class="text-end">Punkty</th>
             </tr>
-        {% empty %}
-            <tr><td colspan="3" class="text-muted">Brak rozliczonych typów.</td></tr>
-        {% endfor %}
-    </tbody>
-</table>
+            </thead>
+            <tbody>
+            {% for u in users %}
+                <tr {% if u == user %}class="table-primary"{% endif %}>
+                    <td>{{ u.rank }}</td>
+                    <td>
+                        {{ u.username }}
+                        {% if u == user %}<span class="badge bg-primary ms-1">Ty</span>{% endif %}
+                    </td>
+                    <td class="text-end fw-bold">{{ u.total_points }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="3" class="text-muted">Brak rozliczonych typów.</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% if league_tables %}
+<h3 class="mt-5 mb-3">Rankingi lig</h3>
+<div class="row g-4">
+    {% for t in league_tables %}
+        <div class="col-12 col-md-6">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <a href="{% url 'typer:league_detail' t.league.id %}" class="text-decoration-none fw-semibold">{{ t.league }}</a>
+                    <small class="text-muted">{{ t.league.sport.name }}</small>
+                </div>
+                <table class="table table-sm table-striped align-middle mb-0">
+                    <tbody>
+                        {% for r in t.rows %}
+                            <tr {% if r.username == user.username %}class="table-primary"{% endif %}>
+                                <td style="width: 2.5rem;">{{ r.rank }}</td>
+                                <td>{{ r.username }}</td>
+                                <td class="text-end fw-bold">{{ r.total_points }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <div class="card-footer text-end">
+                    <a href="{% url 'typer:league_detail' t.league.id %}" class="small">Pełny ranking</a>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+{% endif %}
 {% endblock %}

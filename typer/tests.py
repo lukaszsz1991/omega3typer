@@ -2,11 +2,13 @@ import os, tempfile
 from datetime import date, timedelta
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
-from django.test import Client, TestCase
+from django.test import Client, TestCase, SimpleTestCase
 from django.urls import reverse
 from django.utils import timezone
+from types import SimpleNamespace
 from .constants import POINTS_EXACT_SCORE, POINTS_GOAL_DIFFERENCE, POINTS_WINNER, NO_POINTS, UPCOMING_DAYS
 from .models import User, Sport, Team, League, Match, Prediction, Points, TypingGroup, TypingGroupMember, outcome
+from .utils import assign_ranks
 
 
 class OutcomeTests(TestCase):
@@ -137,7 +139,7 @@ class PredictViewTests(BaseTestCase):
         self.client.logout()
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 302)
-        self.assertIn("/login/", response.url)
+        self.assertIn("/login/", response.url)  # noqa
 
     def test_can_submit_prediction(self):
         self.client.post(self.url, {"predicted_home": 2, "predicted_away": 1})
@@ -313,6 +315,26 @@ class GroupRankingTests(BaseTestCase):
         self.assertTrue(all(u.total_points == 0 for u in self.ranking()))
 
 
+class GlobalRankingTests(BaseTestCase):
+    def test_ties_share_rank(self):
+        other = User.objects.create_user(username="drugi", password="haslo-testowe-123")
+        self.predict(1, 0)
+        Prediction.objects.create(
+            user=other, match=self.match, predicted_home=1, predicted_away=0
+        )
+        self.finish(1, 0)
+        response = self.client.get(reverse("typer:ranking"))
+        self.assertEqual([u.rank for u in response.context["users"]], [1, 1])
+
+    def test_ranking_page_has_league_tables(self):
+        self.predict(2, 1)
+        self.finish(2, 1)
+        response = self.client.get(reverse("typer:ranking"))
+        table = response.context["league_tables"][0]
+        self.assertEqual(table["league"], self.league)
+        self.assertEqual([r.username for r in table["rows"]], ["tester"])
+
+
 class LeagueViewTests(BaseTestCase):
     def test_league_list_shows_leagues(self):
         response = self.client.get(reverse("typer:league_list"))
@@ -322,6 +344,14 @@ class LeagueViewTests(BaseTestCase):
         response = self.client.get(reverse("typer:league_detail", args=[self.league.id]))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(list(response.context["upcoming"]), [self.match])
+
+    def test_league_ranking_lists_users_with_points(self):
+        self.predict(2, 1)
+        self.finish(2, 1)
+        response = self.client.get(reverse("typer:league_detail", args=[self.league.id]))
+        ranking = response.context["ranking"]
+        self.assertEqual([(u.username, u.total_points) for u in ranking],
+                         [("tester", POINTS_EXACT_SCORE)])
 
 
 class MatchCleanTests(BaseTestCase):
@@ -366,12 +396,12 @@ class MatchListViewTests(BaseTestCase):
 
     def test_filter_by_sport_hides_other_sport(self):
         other_sport = Sport.objects.create(name="Piłka ręczna")
-        other_league = League.objects.create(
-            name="Liga X", sport=other_sport, year=2027,
-            end_date=timezone.localdate() + timedelta(days=200),
-        )
         response = self.client.get(reverse("typer:match_list"), {"sport": other_sport.id})
         self.assertNotContains(response, self.home.name)
+
+    def test_garbage_filter_values_do_not_break_page(self):
+        response = self.client.get(reverse("typer:match_list"), {"sport": "abc", "league": "x"})
+        self.assertEqual(response.status_code, 200)
 
 
 class ImportMatchesTests(BaseTestCase):
@@ -419,3 +449,10 @@ class MatchListSectionsTests(BaseTestCase):
         self.match.save()
         response = self.client.get(reverse("typer:match_list"))
         self.assertEqual(list(response.context["other_upcoming"]), [])
+
+
+class AssignRanksTests(SimpleTestCase):
+    def test_ties_share_rank_and_next_is_skipped(self):
+        items = [SimpleNamespace(total_points=p) for p in (10, 7, 7, 3)]
+        assign_ranks(items)
+        self.assertEqual([i.rank for i in items], [1, 2, 2, 4])

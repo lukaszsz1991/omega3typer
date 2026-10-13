@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import timedelta
 from django.shortcuts import render, redirect
 from django.contrib.auth import login
@@ -8,9 +9,11 @@ from django.db.models import Sum, Q, F
 from django.http import HttpRequest, HttpResponse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
-from .constants import UPCOMING_DAYS, FINISHED_LIMIT
-from .models import League, Match, Prediction, User, TypingGroup, TypingGroupMember, Sport
+from types import SimpleNamespace
+from .constants import UPCOMING_DAYS, FINISHED_LIMIT, RANKING_PREVIEW
+from .models import League, Match, Points, Prediction, User, TypingGroup, TypingGroupMember, Sport
 from .forms import RegistrationForm, PredictionForm, TypingGroupForm, JoinGroupForm
+from .utils import assign_ranks
 
 
 def match_list_view(request: HttpRequest) -> HttpResponse:
@@ -95,12 +98,32 @@ def predict_view(request: HttpRequest, match_id) -> HttpResponse:
 
 
 def ranking_view(request: HttpRequest) -> HttpResponse:
-    users = (
+    users = assign_ranks(
         User.objects.annotate(total_points=Sum("predictions__points__points_awarded"))
         .filter(total_points__isnull=False)
         .order_by("-total_points", "username")
     )
-    return render(request, "typer/ranking.html", {"users": users})
+
+    # jedno zapytanie na wszystkie ligi, grupowanie w Pythonie
+    rows = (
+        Points.objects
+        .values(lid=F("prediction__match__league_id"), username=F("prediction__user__username"))
+        .annotate(total_points=Sum("points_awarded"))
+        .order_by("-total_points", "username")
+    )
+    by_league = defaultdict(list)
+    for r in rows:
+        by_league[r["lid"]].append(
+            SimpleNamespace(username=r["username"], total_points=r["total_points"])
+        )
+
+    league_tables = []
+    for league in League.objects.select_related("sport").order_by("sport__name", "name", "-year"):
+        ranked = assign_ranks(by_league.get(league.id, []))
+        if ranked:
+            league_tables.append({"league": league, "rows": ranked[:RANKING_PREVIEW]})
+
+    return render(request, "typer/ranking.html", {"users": users, "league_tables": league_tables})
 
 
 @login_required
@@ -134,11 +157,13 @@ def group_detail_view(request: HttpRequest, group_id: int) -> HttpResponse:
     if not group.is_active:
         messages.error(request, "Sezon tej ligi już się zakończył.")
         return redirect("typer:group_list")
-    ranking = (group.members
-               .annotate(total_points=Sum("predictions__points__points_awarded",
-                                          filter=Q(predictions__match__league=group.league),
-                                          default=0))
-               .order_by("-total_points", "username"))
+    ranking = assign_ranks(
+        group.members
+        .annotate(total_points=Sum("predictions__points__points_awarded",
+                                   filter=Q(predictions__match__league=group.league),
+                                   default=0))
+        .order_by("-total_points", "username")
+    )
     return render(request, "typer/group_detail.html",
                   {"group": group, "ranking": ranking, "is_owner": group.owner_id == request.user.id})
 
@@ -179,10 +204,19 @@ def league_detail_view(request: HttpRequest, league_id: int) -> HttpResponse:
     matches = Match.objects.filter(league=league).select_related("home_team", "away_team")
     upcoming = matches.filter(status=Match.Status.SCHEDULED).order_by("scheduled_at")
     finished = matches.filter(status=Match.Status.FINISHED).order_by("-scheduled_at")
+    ranking = assign_ranks(
+        User.objects.annotate(
+            total_points=Sum(
+                "predictions__points__points_awarded",
+                filter=Q(predictions__match__league=league), ))
+        .filter(total_points__isnull=False)
+        .order_by("-total_points", "username")
+    )
     return render(request, "typer/league_detail.html", {
         "league": league,
         "upcoming": upcoming,
         "finished": finished,
+        "ranking": ranking,
     })
 
 
