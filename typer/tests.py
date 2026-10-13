@@ -5,7 +5,7 @@ from django.core.management import call_command
 from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils import timezone
-from .constants import POINTS_EXACT_SCORE, POINTS_GOAL_DIFFERENCE, POINTS_WINNER, NO_POINTS
+from .constants import POINTS_EXACT_SCORE, POINTS_GOAL_DIFFERENCE, POINTS_WINNER, NO_POINTS, UPCOMING_DAYS
 from .models import User, Sport, Team, League, Match, Prediction, Points, TypingGroup, TypingGroupMember, outcome
 
 
@@ -323,11 +323,13 @@ class LeagueViewTests(BaseTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(list(response.context["upcoming"]), [self.match])
 
+
 class MatchCleanTests(BaseTestCase):
     def test_same_team_on_both_sides_is_invalid(self):
         self.match.away_team = self.match.home_team
         with self.assertRaises(ValidationError):
             self.match.clean()
+
 
 class MatchDetailViewTests(BaseTestCase):
     def setUp(self):
@@ -337,9 +339,11 @@ class MatchDetailViewTests(BaseTestCase):
         self.client.login(username="tester", password="haslo-testowe-123")
         self.url = reverse("typer:match_detail", args=[self.match.id])
 
-    def test_anonymous_user_is_redirected(self):
+    def test_anonymous_user_can_view_match_detail(self):
         self.client.logout()
-        self.assertEqual(self.client.get(self.url).status_code, 302)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(response.context["my_prediction"])
 
     def test_other_predictions_hidden_before_match_start(self):
         response = self.client.get(self.url)
@@ -352,6 +356,7 @@ class MatchDetailViewTests(BaseTestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.context["predictions"].count(), 1)
 
+
 class MatchListViewTests(BaseTestCase):
     def test_match_list_renders_with_links_to_details(self):
         self.client.login(username="tester", password="haslo-testowe-123")
@@ -359,10 +364,20 @@ class MatchListViewTests(BaseTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, reverse("typer:match_detail", args=[self.match.id]))
 
+    def test_filter_by_sport_hides_other_sport(self):
+        other_sport = Sport.objects.create(name="Piłka ręczna")
+        other_league = League.objects.create(
+            name="Liga X", sport=other_sport, year=2027,
+            end_date=timezone.localdate() + timedelta(days=200),
+        )
+        response = self.client.get(reverse("typer:match_list"), {"sport": other_sport.id})
+        self.assertNotContains(response, self.home.name)
+
+
 class ImportMatchesTests(BaseTestCase):
     def test_import_creates_match_and_is_idempotent(self):
         with tempfile.NamedTemporaryFile(
-            "w", suffix=".csv", delete=False, encoding="utf-8", newline=""
+                "w", suffix=".csv", delete=False, encoding="utf-8", newline=""
         ) as f:
             f.write("league,year,home_team,away_team,scheduled_at,home_score,away_score\n")
             f.write(f"{self.league.name},{self.league.year},Nowa A,Nowa B,2030-01-01 18:00,2,1\n")
@@ -374,3 +389,33 @@ class ImportMatchesTests(BaseTestCase):
         matches = Match.objects.filter(home_team__name="Nowa A")
         self.assertEqual(matches.count(), 1)
         self.assertEqual(matches.first().result, Match.Result.HOME)
+
+
+class PublicPagesTests(BaseTestCase):
+    def test_anonymous_can_view_match_list_and_ranking(self):
+        for name in ("typer:match_list", "typer:ranking"):
+            with self.subTest(name=name):
+                self.assertEqual(self.client.get(reverse(name)).status_code, 200)
+
+
+class MatchListSectionsTests(BaseTestCase):
+    def test_match_from_users_group_league_goes_to_my_section(self):
+        group = TypingGroup.objects.create(
+            name="Znajomi", is_private=True, owner=self.user, league=self.league
+        )
+        TypingGroupMember.objects.create(user=self.user, group=group)
+        self.client.login(username="tester", password="haslo-testowe-123")
+        response = self.client.get(reverse("typer:match_list"))
+        self.assertEqual(list(response.context["my_upcoming"]), [self.match])
+        self.assertEqual(list(response.context["other_upcoming"]), [])
+
+    def test_anonymous_sees_matches_in_other_section(self):
+        response = self.client.get(reverse("typer:match_list"))
+        self.assertEqual(list(response.context["my_upcoming"]), [])
+        self.assertEqual(list(response.context["other_upcoming"]), [self.match])
+
+    def test_matches_beyond_horizon_are_hidden(self):
+        self.match.scheduled_at = timezone.now() + timedelta(days=UPCOMING_DAYS + 5)
+        self.match.save()
+        response = self.client.get(reverse("typer:match_list"))
+        self.assertEqual(list(response.context["other_upcoming"]), [])

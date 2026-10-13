@@ -1,3 +1,4 @@
+from datetime import timedelta
 from django.shortcuts import render, redirect
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
@@ -5,19 +6,49 @@ from django.contrib import messages
 from django.shortcuts import get_object_or_404
 from django.db.models import Sum, Q, F
 from django.http import HttpRequest, HttpResponse
+from django.utils import timezone
 from django.views.decorators.http import require_POST
-from .models import League, Match, Prediction, User, TypingGroup, TypingGroupMember
+from .constants import UPCOMING_DAYS, FINISHED_LIMIT
+from .models import League, Match, Prediction, User, TypingGroup, TypingGroupMember, Sport
 from .forms import RegistrationForm, PredictionForm, TypingGroupForm, JoinGroupForm
 
 
-@login_required
 def match_list_view(request: HttpRequest) -> HttpResponse:
+    now = timezone.now()
+    sport_id = request.GET.get("sport", "")
+    league_id = request.GET.get("league", "")
+
     matches = Match.objects.select_related("league", "home_team", "away_team")
-    upcoming = matches.exclude(status=Match.Status.FINISHED).order_by("scheduled_at")
-    finished = matches.filter(status=Match.Status.FINISHED).order_by("-scheduled_at")
+    if sport_id.isdigit():
+        matches = matches.filter(league__sport_id=sport_id)
+    if league_id.isdigit():
+        matches = matches.filter(league_id=league_id)
+
+    upcoming = matches.filter(
+        status__in=[Match.Status.SCHEDULED, Match.Status.LIVE],
+        scheduled_at__gte=now - timedelta(hours=3),
+        scheduled_at__lte=now + timedelta(days=UPCOMING_DAYS),
+    ).order_by("scheduled_at")
+
+    if request.user.is_authenticated:
+        my_league_ids = request.user.typing_groups.values("league_id")
+        my_upcoming = upcoming.filter(league_id__in=my_league_ids)
+        other_upcoming = upcoming.exclude(league_id__in=my_league_ids)
+    else:
+        my_upcoming = Match.objects.none()
+        other_upcoming = upcoming
+
+    finished = matches.filter(status=Match.Status.FINISHED).order_by("-scheduled_at")[:FINISHED_LIMIT]
     return render(request, "typer/match_list.html", {
-        "upcoming": upcoming,
+        "my_upcoming": my_upcoming,
+        "other_upcoming": other_upcoming,
         "finished": finished,
+        "upcoming_days": UPCOMING_DAYS,
+        "finished_limit": FINISHED_LIMIT,
+        "sports": Sport.objects.order_by("name"),
+        "leagues": League.objects.select_related("sport").order_by("sport__name", "name", "-year"),
+        "selected_sport": sport_id,
+        "selected_league": league_id,
     })
 
 
@@ -63,7 +94,6 @@ def predict_view(request: HttpRequest, match_id) -> HttpResponse:
     return render(request, "typer/predict.html", {"form": form, "match": match})
 
 
-@login_required
 def ranking_view(request: HttpRequest) -> HttpResponse:
     users = (
         User.objects.annotate(total_points=Sum("predictions__points__points_awarded"))
@@ -109,7 +139,8 @@ def group_detail_view(request: HttpRequest, group_id: int) -> HttpResponse:
                                           filter=Q(predictions__match__league=group.league),
                                           default=0))
                .order_by("-total_points", "username"))
-    return render(request, "typer/group_detail.html", {"group": group, "ranking": ranking, "is_owner": group.owner_id == request.user.id})
+    return render(request, "typer/group_detail.html",
+                  {"group": group, "ranking": ranking, "is_owner": group.owner_id == request.user.id})
 
 
 @login_required
@@ -147,12 +178,13 @@ def league_detail_view(request: HttpRequest, league_id: int) -> HttpResponse:
     league = get_object_or_404(League.objects.select_related("sport"), pk=league_id)
     matches = Match.objects.filter(league=league).select_related("home_team", "away_team")
     upcoming = matches.filter(status=Match.Status.SCHEDULED).order_by("scheduled_at")
-    finished = matches.filter(status=Match.Status.FINISHED).order_by("-scheduled_at")[:10]
+    finished = matches.filter(status=Match.Status.FINISHED).order_by("-scheduled_at")
     return render(request, "typer/league_detail.html", {
         "league": league,
         "upcoming": upcoming,
         "finished": finished,
     })
+
 
 @login_required
 @require_POST
@@ -187,15 +219,17 @@ def group_leave_view(request, group_id):
     messages.success(request, f"Opuściłeś grupę „{group.name}”.")
     return redirect("typer:group_list")
 
-@login_required
+
 def match_detail_view(request: HttpRequest, match_id: int) -> HttpResponse:
     match = get_object_or_404(
         Match.objects.select_related("league", "home_team", "away_team"), pk=match_id
     )
-    my_prediction = (
-        Prediction.objects.filter(user=request.user, match=match)
-        .select_related("points").first()
-    )
+    my_prediction = None
+    if request.user.is_authenticated:
+        my_prediction = (
+            Prediction.objects.filter(user=request.user, match=match)
+            .select_related("points").first()
+        )
     predictions = None
     if match.is_locked:
         predictions = (

@@ -2,8 +2,7 @@
 
 ## Aplikacja webowa do typowania wyników wydarzeń sportowych (Django)
 
-_Stan na 11.10.2026._
-_Zakres: piłka nożna i ręczna. Każdy sezon rozgrywek to osobna liga (np. „Bundesliga 2027”), grupa znajomych jest przypisana do jednej ligi i po jej zakończeniu trafia do archiwum._
+_Stan na 13.10.2026._
 
 ## Marzec
 
@@ -76,12 +75,15 @@ Działające MVP backendowe:
 
 - [x] Strona główna z listą meczów
 - [x] Lista rozgrywek i strona ligi z meczami (nadchodzące i zakończone)
+- [x] Publiczny dostęp bez logowania: lista meczów, szczegóły meczu, ranking
 - [x] Widok szczegółów meczu (typ użytkownika, punkty, typy graczy po starcie meczu)
 - [x] Formularz typowania
 - [x] Widok rankingu (na razie globalny)
-- [ ] Rankingi poszczególnych lig na stronie ligi (zamiast rankingu globalnego)
 - [x] Responsywność aplikacji
+- [ ] Rankingi poszczególnych lig na stronie ligi (zamiast rankingu globalnego)
+
 - [ ] Filtrowanie meczów (częściowo: podział na ligi)
+- [ ] Podział meczów na kolejki
 
 ---
 
@@ -97,7 +99,7 @@ Działające MVP backendowe:
 
 ### Tydzień 8 – Automatyzacja i API
 
-- [ ] Import drużyn i meczów z pliku CSV (komenda zarządzająca)
+- [x] Import drużyn i meczów z pliku CSV (komenda zarządzająca)
 - [ ] Integracja z zewnętrznym API sportowym (opcjonalnie)
 - [ ] Automatyczne pobieranie meczów
 - [ ] Wystawienie REST API (opcjonalnie)
@@ -127,10 +129,11 @@ Rozbudowana aplikacja:
 
 ### Tydzień 10 – Bezpieczeństwo
 
-- [ ] Walidacja danych wejściowych (częściowo: formularze Django, `Match.clean`, unikalność drużyn w sporcie)
 - [x] Ochrona przed modyfikacją typów po starcie meczu
 - [x] Typy i punkty tylko do odczytu w panelu administratora
 - [x] Typy innych graczy ukryte do startu meczu
+- [x] Konfiguracja z pliku .env (SECRET_KEY, DEBUG, ALLOWED_HOSTS, EMAIL_BACKEND).
+- [ ] Walidacja danych wejściowych (częściowo: formularze Django, `Match.clean`, unikalność drużyn w sporcie)
 - [ ] Kontrola uprawnień użytkowników (częściowo: `login_required`, strona grupy tylko dla członków, akcje właściciela grupy)
 
 ---
