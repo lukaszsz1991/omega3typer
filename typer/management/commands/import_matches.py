@@ -1,16 +1,13 @@
 import csv
 import re
 from datetime import datetime
-
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.utils import timezone
-
 from typer.models import League, Match, Team
 
 
 def plain(name):
-    """Nazwa bez flagi/emotek i spacji na początku i końcu, bez różnic wielkości liter."""
     return re.sub(r"^[^\w]+|[^\w]+$", "", name).strip().casefold()
 
 
@@ -24,7 +21,7 @@ def find_league(name, year):
 
 class Command(BaseCommand):
     help = (
-        "Importuje mecze z pliku CSV. Kolumny: league, year, home_team, away_team, "
+        "Importuje mecze z pliku CSV. Kolumny: league, year, round, home_team, away_team, "
         "scheduled_at (RRRR-MM-DD GG:MM), home_score, away_score (puste dla meczów przyszłych)."
     )
 
@@ -46,14 +43,17 @@ class Command(BaseCommand):
                         datetime.strptime(row["scheduled_at"].strip(), "%Y-%m-%d %H:%M")
                     )
                     defaults = {}
+                    round_value = (row.get("round") or "").strip()
+                    if round_value:
+                        defaults["round"] = int(round_value)
                     home_score = (row.get("home_score") or "").strip()
                     away_score = (row.get("away_score") or "").strip()
                     if home_score and away_score:
-                        defaults = {
+                        defaults.update({
                             "home_score": int(home_score),
                             "away_score": int(away_score),
                             "status": Match.Status.FINISHED,
-                        }
+                        })
                     _, was_created = Match.objects.update_or_create(
                         league=league, home_team=home, away_team=away,
                         scheduled_at=when, defaults=defaults,

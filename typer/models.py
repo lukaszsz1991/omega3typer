@@ -115,6 +115,7 @@ class Match(models.Model):
     home_team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="home_matches")
     away_team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="away_matches")
     scheduled_at = models.DateTimeField()
+    round = models.PositiveSmallIntegerField("Kolejka", blank=True, null=True)
     home_score = models.PositiveSmallIntegerField(blank=True, null=True)
     away_score = models.PositiveSmallIntegerField(blank=True, null=True)
     status = models.CharField(

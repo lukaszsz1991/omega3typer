@@ -49,10 +49,10 @@ python manage.py test
 ## Import meczów z CSV
 
 ```bash
-python manage.py import_matches data/mecze.csv
+python manage.py import_matches data/mecze_ekstraklasa2027.csv
 ```
 
-Kolumny: `league, year, home_team, away_team, scheduled_at, home_score, away_score`.
+Kolumny: `league, year, round, home_team, away_team, scheduled_at, home_score, away_score`.
 Liga musi istnieć w panelu (nazwa i rok, flaga w nazwie jest pomijana). Ponowny import aktualizuje istniejące mecze i dopisuje wyniki.
 
 ## Plan prac
