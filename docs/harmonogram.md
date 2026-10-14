@@ -82,7 +82,7 @@ Działające MVP backendowe:
 - [x] Responsywność aplikacji
 - [x] Rankingi poszczególnych lig na stronie ligi
 - [x] Filtrowanie meczów
-- [ ] Podział meczów na kolejki
+- [x] Podział meczów na kolejki
 
 ---
 
