@@ -80,9 +80,8 @@ Działające MVP backendowe:
 - [x] Formularz typowania
 - [x] Widok rankingu (na razie globalny)
 - [x] Responsywność aplikacji
-- [ ] Rankingi poszczególnych lig na stronie ligi (zamiast rankingu globalnego)
-
-- [ ] Filtrowanie meczów (częściowo: podział na ligi)
+- [x] Rankingi poszczególnych lig na stronie ligi
+- [x] Filtrowanie meczów
 - [ ] Podział meczów na kolejki
 
 ---
@@ -120,9 +119,9 @@ Rozbudowana aplikacja:
 
 ### Tydzień 9 – Testy
 
-- [ ] Testy jednostkowe modeli (częściowo: `is_locked`, `result`, punkty, walidacja meczu)
+- [x] Testy jednostkowe modeli
 - [x] Testy logiki punktacji
-- [ ] Testy widoków (częściowo: typowanie, grupy, ligi, lista i szczegóły meczu)
+- [x] Testy widoków
 - [x] Weryfikacja poprawności naliczania punktów
 
 ---
@@ -132,9 +131,9 @@ Rozbudowana aplikacja:
 - [x] Ochrona przed modyfikacją typów po starcie meczu
 - [x] Typy i punkty tylko do odczytu w panelu administratora
 - [x] Typy innych graczy ukryte do startu meczu
-- [x] Konfiguracja z pliku .env (SECRET_KEY, DEBUG, ALLOWED_HOSTS, EMAIL_BACKEND).
-- [ ] Walidacja danych wejściowych (częściowo: formularze Django, `Match.clean`, unikalność drużyn w sporcie)
-- [ ] Kontrola uprawnień użytkowników (częściowo: `login_required`, strona grupy tylko dla członków, akcje właściciela grupy)
+- [x] Konfiguracja z pliku .env (SECRET_KEY, DEBUG, ALLOWED_HOSTS).
+- [x] Walidacja danych wejściowych (formularze, unikalność e-maila, limit typowanych bramek)
+- [x] Kontrola uprawnień użytkowników
 
 ---
 

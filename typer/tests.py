@@ -2,6 +2,7 @@ import os, tempfile
 from datetime import date, timedelta
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
+from django.db import IntegrityError, transaction
 from django.test import Client, TestCase, SimpleTestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -158,6 +159,16 @@ class PredictViewTests(BaseTestCase):
         self.client.post(self.url, {"predicted_home": 2, "predicted_away": 1})
         self.assertEqual(Prediction.objects.count(), 0)
 
+    def test_invalid_scores_are_rejected(self):
+        for home, away in [(-1, 0), (0, -3), (100, 0), ("abc", 1), ("", "")]:
+            with self.subTest(home=home, away=away):
+                self.client.post(self.url, {"predicted_home": home, "predicted_away": away})
+                self.assertEqual(Prediction.objects.count(), 0)
+
+    def test_boundary_scores_are_accepted(self):
+        self.client.post(self.url, {"predicted_home": 0, "predicted_away": 99})
+        self.assertEqual(Prediction.objects.count(), 1)
+
 
 class TypingGroupViewTests(BaseTestCase):
     def setUp(self):
@@ -256,6 +267,16 @@ class TypingGroupViewTests(BaseTestCase):
         response = self.other_client.post(reverse("typer:group_regenerate_code", args=[group.id]))
         self.assertEqual(response.status_code, 404)
 
+    def test_cannot_create_group_for_finished_league(self):
+        self.league.end_date = date.today() - timedelta(days=1)
+        self.league.save()
+        self.client.post(reverse("typer:group_create"), {"name": "Stara", "league": self.league.id})
+        self.assertFalse(TypingGroup.objects.filter(name="Stara").exists())
+
+    def test_join_with_empty_code_does_not_crash(self):
+        response = self.other_client.post(reverse("typer:group_join"), {"code": ""})
+        self.assertEqual(response.status_code, 200)
+
 
 class GroupRankingTests(BaseTestCase):
     def setUp(self):
@@ -334,6 +355,12 @@ class GlobalRankingTests(BaseTestCase):
         self.assertEqual(table["league"], self.league)
         self.assertEqual([r.username for r in table["rows"]], ["tester"])
 
+    def test_ranking_is_empty_without_points(self):
+        response = self.client.get(reverse("typer:ranking"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["users"], [])
+        self.assertEqual(response.context["league_tables"], [])
+
 
 class LeagueViewTests(BaseTestCase):
     def test_league_list_shows_leagues(self):
@@ -357,6 +384,13 @@ class LeagueViewTests(BaseTestCase):
 class MatchCleanTests(BaseTestCase):
     def test_same_team_on_both_sides_is_invalid(self):
         self.match.away_team = self.match.home_team
+        with self.assertRaises(ValidationError):
+            self.match.clean()
+
+    def test_team_from_other_sport_is_invalid(self):
+        other_sport = Sport.objects.create(name="Piłka ręczna")
+        foreign_team = Team.objects.create(name="Obca", sport=other_sport)
+        self.match.away_team = foreign_team
         with self.assertRaises(ValidationError):
             self.match.clean()
 
@@ -385,6 +419,11 @@ class MatchDetailViewTests(BaseTestCase):
         self.match.save()
         response = self.client.get(self.url)
         self.assertEqual(response.context["predictions"].count(), 1)
+
+    def test_anonymous_does_not_see_predict_button(self):
+        self.client.logout()
+        response = self.client.get(self.url)
+        self.assertNotContains(response, reverse("typer:predict", args=[self.match.id]))
 
 
 class MatchListViewTests(BaseTestCase):
@@ -456,3 +495,191 @@ class AssignRanksTests(SimpleTestCase):
         items = [SimpleNamespace(total_points=p) for p in (10, 7, 7, 3)]
         assign_ranks(items)
         self.assertEqual([i.rank for i in items], [1, 2, 2, 4])
+
+
+class LeagueModelTests(BaseTestCase):
+    def test_str(self):
+        self.assertEqual(str(self.league), f"Test Liga {self.league.year}")
+
+    def test_league_is_not_finished_on_its_last_day(self):
+        self.league.end_date = date.today()
+        self.assertFalse(self.league.is_finished)
+
+    def test_league_is_finished_after_end_date(self):
+        self.league.end_date = date.today() - timedelta(days=1)
+        self.assertTrue(self.league.is_finished)
+
+    def test_name_and_year_must_be_unique(self):
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            League.objects.create(
+                name=self.league.name, sport=self.sport,
+                year=self.league.year, end_date=date.today() + timedelta(days=10),
+            )
+
+
+class TeamModelTests(BaseTestCase):
+    def test_team_name_must_be_unique_within_sport(self):
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            Team.objects.create(name=self.home.name, sport=self.sport)
+
+    def test_same_name_is_allowed_in_another_sport(self):
+        other_sport = Sport.objects.create(name="Piłka ręczna")
+        team = Team.objects.create(name=self.home.name, sport=other_sport)
+        self.assertEqual(team.name, self.home.name)
+
+
+class TypingGroupModelTests(BaseTestCase):
+    def make_group(self, **kwargs):
+        return TypingGroup.objects.create(
+            name="Znajomi", league=self.league, owner=self.user, **kwargs
+        )
+
+    def test_private_group_gets_invite_code(self):
+        group = self.make_group(is_private=True)
+        self.assertTrue(group.invite_code)
+        self.assertLessEqual(len(group.invite_code), 20)
+
+    def test_public_group_has_no_invite_code(self):
+        group = self.make_group(is_private=False)
+        self.assertFalse(group.invite_code)
+
+    def test_group_is_active_while_league_is_running(self):
+        self.assertTrue(self.make_group().is_active)
+
+    def test_group_is_inactive_after_league_end(self):
+        group = self.make_group()
+        self.league.end_date = date.today() - timedelta(days=1)
+        self.league.save()
+        group.refresh_from_db()
+        self.assertFalse(group.is_active)
+
+    def test_regenerate_invite_code_changes_code(self):
+        group = self.make_group(is_private=True)
+        old_code = group.invite_code
+        group.regenerate_invite_code()
+        group.refresh_from_db()
+        self.assertNotEqual(group.invite_code, old_code)
+
+    def test_user_cannot_be_member_twice(self):
+        group = self.make_group(is_private=True)
+        TypingGroupMember.objects.create(user=self.user, group=group)
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            TypingGroupMember.objects.create(user=self.user, group=group)
+
+
+class PredictionModelTests(BaseTestCase):
+    def test_user_can_predict_match_only_once(self):
+        self.predict(1, 0)
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            self.predict(2, 2)
+
+
+class MatchStrTests(BaseTestCase):
+    def test_str_of_scheduled_match(self):
+        self.assertIn("Drużyna A - Drużyna B", str(self.match))
+
+    def test_str_of_finished_match_shows_score(self):
+        self.finish(2, 1)
+        self.assertEqual(str(self.match), "Drużyna A 2:1 Drużyna B")
+
+
+class LoginRequiredTests(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        self.group = TypingGroup.objects.create(
+            name="Znajomi", league=self.league, owner=self.user, is_private=True
+        )
+        TypingGroupMember.objects.create(user=self.user, group=self.group)
+
+    def assert_redirects_to_login(self, response):
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response["Location"].startswith(reverse("typer:login")))
+
+    def test_anonymous_is_redirected_from_protected_pages(self):
+        urls = [
+            reverse("typer:group_list"),
+            reverse("typer:group_create"),
+            reverse("typer:group_join"),
+            reverse("typer:group_detail", args=[self.group.id]),
+            reverse("typer:predict", args=[self.match.id]),
+        ]
+        for url in urls:
+            with self.subTest(url=url):
+                self.assert_redirects_to_login(self.client.get(url))
+
+    def test_anonymous_cannot_use_group_actions(self):
+        urls = [
+            reverse("typer:group_leave", args=[self.group.id]),
+            reverse("typer:group_regenerate_code", args=[self.group.id]),
+            reverse("typer:group_remove_member", args=[self.group.id, self.user.id]),
+        ]
+        for url in urls:
+            with self.subTest(url=url):
+                self.assert_redirects_to_login(self.client.post(url))
+        self.assertEqual(self.group.members.count(), 1)
+
+    def test_group_actions_reject_get_requests(self):
+        self.client.login(username="tester", password="haslo-testowe-123")
+        for name in ("typer:group_leave", "typer:group_regenerate_code"):
+            with self.subTest(name=name):
+                response = self.client.get(reverse(name, args=[self.group.id]))
+                self.assertEqual(response.status_code, 405)
+
+
+class GroupListViewTests(BaseTestCase):
+    def test_group_list_splits_active_and_archived(self):
+        old_league = League.objects.create(
+            name="Stara liga", sport=self.sport, year=2020,
+            end_date=date.today() - timedelta(days=10),
+        )
+        active = TypingGroup.objects.create(name="Aktualna", league=self.league, owner=self.user)
+        archived = TypingGroup.objects.create(name="Dawna", league=old_league, owner=self.user)
+        for group in (active, archived):
+            TypingGroupMember.objects.create(user=self.user, group=group)
+
+        self.client.login(username="tester", password="haslo-testowe-123")
+        response = self.client.get(reverse("typer:group_list"))
+        self.assertEqual(response.context["active"], [active])
+        self.assertEqual(response.context["archived"], [archived])
+
+    def test_archived_group_detail_redirects_to_list(self):
+        group = TypingGroup.objects.create(name="Dawna", league=self.league, owner=self.user)
+        TypingGroupMember.objects.create(user=self.user, group=group)
+        self.league.end_date = date.today() - timedelta(days=1)
+        self.league.save()
+
+        self.client.login(username="tester", password="haslo-testowe-123")
+        response = self.client.get(reverse("typer:group_detail", args=[group.id]))
+        self.assertRedirects(response, reverse("typer:group_list"))
+
+
+class RegistrationTests(TestCase):
+    def setUp(self):
+        self.url = reverse("typer:register")
+        self.data = {
+            "username": "nowy",
+            "email": "nowy@example.com",
+            "password1": "Sup3r-tajne-haslo-2026",
+            "password2": "Sup3r-tajne-haslo-2026",
+        }
+
+    def test_valid_registration_creates_user_and_redirects(self):
+        response = self.client.post(self.url, self.data)
+        self.assertRedirects(response, reverse("typer:home"))
+        self.assertTrue(User.objects.filter(username="nowy").exists())
+
+    def test_duplicate_email_is_rejected_case_insensitively(self):
+        User.objects.create_user(username="stary", email="Nowy@Example.com", password="haslo-testowe-123")
+        response = self.client.post(self.url, self.data)
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(User.objects.filter(username="nowy").exists())
+
+    def test_password_mismatch_is_rejected(self):
+        self.data["password2"] = "inne-haslo-2026"
+        self.client.post(self.url, self.data)
+        self.assertFalse(User.objects.filter(username="nowy").exists())
+
+    def test_email_is_required(self):
+        self.data["email"] = ""
+        self.client.post(self.url, self.data)
+        self.assertFalse(User.objects.filter(username="nowy").exists())

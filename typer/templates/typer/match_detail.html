@@ -2,63 +2,78 @@
 {% block title %}{{ match.home_team }} – {{ match.away_team }} — Omega 3 Typer{% endblock %}
 
 {% block content %}
-    <p class="text-muted mb-1">
+    <p class="text-muted mb-3">
         <a href="{% url 'typer:league_detail' match.league.id %}">{{ match.league }}</a>
         · {{ match.scheduled_at|date:"d.m.Y H:i" }}
     </p>
 
-    <h2 class="mb-3">
-        {{ match.home_team }}
-        {% if match.status == "finished" %}{{ match.home_score }}:{{ match.away_score }}{% else %}–{% endif %}
-        {{ match.away_team }}
-    </h2>
+    <div class="card text-center mb-4">
+        <div class="card-body py-4">
+            <div class="row align-items-center g-2">
+                <div class="col-5 fs-5 fw-semibold">{{ match.home_team }}</div>
+                <div class="col-2 display-6 fw-bold">
+                    {% if match.status == "finished" %}{{ match.home_score }}:{{ match.away_score }}{% else %}–{% endif %}
+                </div>
+                <div class="col-5 fs-5 fw-semibold">{{ match.away_team }}</div>
+            </div>
+            <span class="badge mt-3
+                {% if match.status == 'finished' %}bg-success
+                {% elif match.status == 'live' %}bg-danger
+                {% else %}bg-secondary{% endif %}">
+                {{ match.get_status_display }}
+            </span>
+        </div>
+    </div>
 
-    <p>
-        Status: <span class="badge bg-secondary">{{ match.get_status_display }}</span>
-    </p>
     {% if user.is_authenticated %}
-        <h4 class="mt-4">Twój typ</h4>
+        <h4>Twój typ</h4>
         {% if my_prediction %}
-            <p class="fs-5 mb-1">{{ my_prediction.predicted_home }}:{{ my_prediction.predicted_away }}
+            <p class="fs-4 mb-2">
+                {{ my_prediction.predicted_home }}:{{ my_prediction.predicted_away }}
                 {% if my_prediction.points %}
-                    <span class="badge bg-success">{{ my_prediction.points.points_awarded }} pkt</span>
+                    <span class="badge bg-success align-middle">{{ my_prediction.points.points_awarded }} pkt</span>
                 {% endif %}
             </p>
         {% else %}
             <p class="text-muted">Nie typowałeś tego meczu.</p>
         {% endif %}
+        {% if not match.is_locked %}
+            <a class="btn btn-primary" href="{% url 'typer:predict' match.id %}">
+                {% if my_prediction %}Zmień typ{% else %}Typuj{% endif %}
+            </a>
+        {% endif %}
     {% else %}
         <p class="text-muted"><a href="{% url 'typer:login' %}">Zaloguj się</a>, żeby typować.</p>
     {% endif %}
+
     {% if not match.is_locked %}
-        <a class="btn btn-primary" href="{% url 'typer:predict' match.id %}">
-            {% if my_prediction %}Zmień typ{% else %}Typuj{% endif %}
-        </a>
         <p class="text-muted small mt-3">Typy innych graczy będą widoczne po rozpoczęciu meczu.</p>
     {% else %}
         <h4 class="mt-4">Typy graczy</h4>
-        <table class="table table-striped">
-            <thead>
-            <tr>
-                <th>Użytkownik</th>
-                <th>Typ</th>
-                <th class="text-end">Punkty</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for p in predictions %}
-                <tr {% if p.user == user %}class="table-primary"{% endif %}>
-                    <td>{{ p.user.username }}</td>
-                    <td>{{ p.predicted_home }}:{{ p.predicted_away }}</td>
-                    <td class="text-end">{% if p.points %}{{ p.points.points_awarded }}{% else %}–{% endif %}</td>
-                </tr>
-            {% empty %}
+        <div class="table-responsive">
+            <table class="table table-striped align-middle">
+                <thead>
                 <tr>
-                    <td colspan="3" class="text-muted">Nikt nie typował tego meczu.</td>
+                    <th>Użytkownik</th>
+                    <th>Typ</th>
+                    <th class="text-end">Punkty</th>
                 </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                {% for p in predictions %}
+                    <tr {% if p.user == user %}class="table-primary"{% endif %}>
+                        <td>{{ p.user.username }}{% if p.user == user %} <span class="badge bg-primary ms-1">Ty</span>{% endif %}</td>
+                        <td>{{ p.predicted_home }}:{{ p.predicted_away }}</td>
+                        <td class="text-end fw-bold">{% if p.points %}{{ p.points.points_awarded }}{% else %}–{% endif %}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-muted">Nikt nie typował tego meczu.</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
     {% endif %}
 
     <p class="mt-4"><a href="{% url 'typer:match_list' %}">Wróć do listy meczów</a></p>
