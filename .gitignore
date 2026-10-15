@@ -9,3 +9,4 @@ staticfiles/
 .coverage
 htmlcov/
 .idea/
+db.txt

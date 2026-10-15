@@ -1,0 +1,6 @@
+* [Czym jest Omega 3 Typer?](./README.md)
+* [Dla gracza](./gracz.md)
+* [Dla właściciela grupy](./wlasciciel.md)
+* [Dla administratora](./admin.md)
+* [FAQ](./faq.md)
+* [Harmoonogram prac](./harmonogram.md)

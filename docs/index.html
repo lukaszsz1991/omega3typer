@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1.0">
+  <meta name="description" content="Dokumentacja projektu Omega 3 Typer – aplikacji webowej do typowania wyników wydarzeń sportowych (praca inżynierska).">
+  <title>Omega 3 Typer – dokumentacja</title>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsify@4.13.1/lib/themes/vue.css">
+
+  <style>
+    :root {
+      --theme-color: #0d6efd; /* ten sam niebieski co Bootstrap w aplikacji */
+      --base-font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    .app-name-link { font-weight: 600; }
+
+    /* tabele z wymaganiami i adresami: pełna szerokość, czytelne na telefonie */
+    .markdown-section table { display: block; overflow-x: auto; width: 100%; }
+    .markdown-section th { background: #f6f8fa; }
+
+    /* rozwijane fragmenty <details> (np. długie listingi) */
+    .markdown-section details { margin: 1em 0; }
+    .markdown-section summary { cursor: pointer; font-weight: 600; }
+
+    /* diagramy mermaid (UML) wyśrodkowane */
+    .mermaid { text-align: center; margin: 1.5em 0; }
+
+    /* druk / eksport do PDF: bez menu bocznego */
+    @media print {
+      .sidebar, .sidebar-toggle, .github-corner, .app-nav { display: none !important; }
+      .content { left: 0 !important; padding-top: 0 !important; }
+      .markdown-section { max-width: 100% !important; }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">Ładowanie dokumentacji…</div>
+
+  <noscript>Do wyświetlenia dokumentacji potrzebny jest JavaScript.</noscript>
+
+  <script>
+    window.$docsify = {
+      name: 'Omega 3 Typer',
+      repo: 'lukaszsz1991/omega3typer',
+
+      // pliki .md leżą w tym folderze (docs/); strona startowa to docs/README.md
+      homepage: 'README.md',
+      loadSidebar: true,
+      subMaxLevel: 2,          // w menu bocznym pokazuj nagłówki ## pod każdą stroną
+      auto2top: true,          // po zmianie strony wracaj na górę
+      maxLevel: 3,
+      notFoundPage: true,      // brak pliku = ładna strona 404 zamiast pustej
+      relativePath: false,
+
+      search: {
+        placeholder: 'Szukaj w dokumentacji…',
+        noData: 'Nic nie znaleziono.',
+        depth: 3,
+        maxAge: 86400000,
+        paths: 'auto'
+      },
+
+      copyCode: {
+        buttonText: 'Kopiuj',
+        errorText: 'Błąd',
+        successText: 'Skopiowano'
+      },
+
+      pagination: {
+        previousText: 'Wstecz',
+        nextText: 'Dalej',
+        crossChapter: true
+      },
+
+      plugins: [
+        // stopka z datą ostatniej zmiany nie wymaga gita – pokazujemy tylko nazwę projektu
+        function (hook) {
+          hook.afterEach(function (html) {
+            return html +
+              '<hr><footer style="color:#888;font-size:.85em">' +
+              'Omega 3 Typer · dokumentacja projektu inżynierskiego' +
+              '</footer>';
+          });
+        }
+      ]
+    };
+  </script>
+
+  <!-- rdzeń docsify (wersja przypięta, żeby dokumentacja nie zmieniła się sama) -->
+  <script src="https://cdn.jsdelivr.net/npm/docsify@4.13.1/lib/docsify.min.js"></script>
+
+  <!-- wtyczki dostarczane razem z docsify -->
+  <script src="https://cdn.jsdelivr.net/npm/docsify@4.13.1/lib/plugins/search.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docsify@4.13.1/lib/plugins/zoom-image.min.js"></script>
+
+  <!-- wtyczki zewnętrzne -->
+  <script src="https://cdn.jsdelivr.net/npm/docsify-copy-code@2.1.1/dist/docsify-copy-code.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docsify-pagination@2.10.1/dist/docsify-pagination.min.js"></script>
+
+  <!-- podświetlanie składni: Python, SQL, bash, HTML/szablony Django -->
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-django.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-csv.min.js"></script>
+
+  <!-- diagramy UML / ERD z bloków ```mermaid -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docsify-mermaid@2.0.1/dist/docsify-mermaid.js"></script>
+  <script>mermaid.initialize({ startOnLoad: true });</script>
+</body>
+</html>
