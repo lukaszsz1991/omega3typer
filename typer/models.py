@@ -3,7 +3,9 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.utils import timezone
-from .constants import POINTS_WINNER, POINTS_GOAL_DIFFERENCE, POINTS_EXACT_SCORE, NO_POINTS
+from .constants import POINTS_WINNER, POINTS_GOAL_DIFFERENCE, POINTS_EXACT_SCORE, NO_POINTS, HB_EXACT_SCORE, HB_DRAW, \
+    HB_GOAL_DIFFERENCE, HB_GOAL_DIFFERENCE_MISTAKE_1, HB_GOAL_DIFFERENCE_MISTAKE_2, HB_GOAL_DIFFERENCE_MISTAKE_3, \
+    HB_WINNER, HANDBALL
 
 
 class User(AbstractUser):
@@ -99,6 +101,9 @@ def outcome(home, away):
         return "away"
     return "draw"
 
+def goal_difference(home_score: int, away_score: int):
+    return home_score - away_score
+
 
 class Match(models.Model):
     class Status(models.TextChoices):
@@ -177,14 +182,34 @@ class Prediction(models.Model):
 
     def calculate_points(self):
         match = self.match
-        if (self.predicted_home == match.home_score and self.predicted_away == match.away_score):
-            value = POINTS_EXACT_SCORE
-        elif (self.predicted_home - self.predicted_away == match.home_score - match.away_score):
-            value = POINTS_GOAL_DIFFERENCE
-        elif outcome(self.predicted_home, self.predicted_away) == outcome(match.home_score, match.away_score):
-            value = POINTS_WINNER
+        winner_predicted = (outcome(self.predicted_home, self.predicted_away) == outcome(match.home_score, match.away_score))
+        miss = abs(goal_difference(self.predicted_home, self.predicted_away) - goal_difference(match.home_score, match.away_score))
+        if match.league.sport.name == HANDBALL:
+            if (self.predicted_home == match.home_score and self.predicted_away == match.away_score):
+                value = HB_EXACT_SCORE
+            elif (self.predicted_home - self.predicted_away == match.home_score - match.away_score and match.home_score == match.away_score):
+                value = HB_DRAW
+            elif miss == 0:
+                value = HB_GOAL_DIFFERENCE
+            elif (winner_predicted and miss == 1):
+                value = HB_GOAL_DIFFERENCE_MISTAKE_1
+            elif (winner_predicted and miss== 2):
+                value = HB_GOAL_DIFFERENCE_MISTAKE_2
+            elif (winner_predicted and miss == 3):
+                value = HB_GOAL_DIFFERENCE_MISTAKE_3
+            elif winner_predicted:
+                value = HB_WINNER
+            else:
+                value = NO_POINTS
         else:
-            value = NO_POINTS
+            if (self.predicted_home == match.home_score and self.predicted_away == match.away_score):
+                value = POINTS_EXACT_SCORE
+            elif (goal_difference(self.predicted_home, self.predicted_away) == goal_difference(match.home_score, match.away_score)):
+                value = POINTS_GOAL_DIFFERENCE
+            elif winner_predicted:
+                value = POINTS_WINNER
+            else:
+                value = NO_POINTS
         Points.objects.update_or_create(prediction=self, defaults={"points_awarded": value})
 
 

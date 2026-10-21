@@ -1,6 +1,9 @@
 # Omega 3 Typer
 
-Aplikacja webowa do typowania wyników wydarzeń sportowych (praca inżynierska).
+Aplikacja webowa do typowania wyników wydarzeń sportowych (praca inżynierska).POINTS_EXACT_SCORE = 4
+POINTS_GOAL_DIFFERENCE = 2
+POINTS_WINNER = 1
+NO_POINTS = 0
 Django + PostgreSQL + Bootstrap 5.
 
 ## Uruchomienie (Linux)
@@ -13,6 +16,10 @@ cd omega3typer
 bash setup.sh
 source venv/bin/activate
 python manage.py createsuperuser
+python manage.py runserver
+```
+Uruchomienie:
+```bash
 python manage.py runserver
 ```
 

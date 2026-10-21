@@ -16,7 +16,7 @@ W formularzu wpisujesz dwie liczby od 0 do 99 i zapisujesz typ. Na jeden mecz mo
 
 Po starcie meczu typowanie jest zablokowane i nie da się już niczego zmienić ani dodać. Dopiero wtedy zobaczysz też typy innych graczy, wcześniej są ukryte, aby nikt nie mógł ich podejrzeć. Po zakończeniu meczu i wpisaniu wyniku punkty naliczają się automatycznie. Zobaczysz je na stronie meczu przy swoim typie.
 
-Po zakończeniu meczu można również oberjrzeć, jak typowali inni gracze.
+Po zakończeniu meczu można również obejrzeć, jak typowali inni gracze.
 
 ## Punktacja
 
@@ -68,7 +68,7 @@ Przykładowe rozliczenie meczu, który się skończył wynikiem `30:28`:
 | 30:20            | 20 (za wskazanie zwycięcy)                                        |
 | 28:29            | 0 (brak przyznanych punktów)                                      |
 
-rzykładowe rozliczenie meczu, który się skończył wynikiem `30:30`:
+Przykładowe rozliczenie meczu, który się skończył wynikiem `30:30`:
 
 | Wytypowany wynik | Przyznane punkty             |
 |------------------|------------------------------|
