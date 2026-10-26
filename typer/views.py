@@ -11,7 +11,8 @@ from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 from types import SimpleNamespace
-from .constants import UPCOMING_DAYS, FINISHED_LIMIT, RANKING_PREVIEW, MAX_PREDICTED_GOALS
+from .constants import (UPCOMING_DAYS, FINISHED_LIMIT, RANKING_PREVIEW, MAX_PREDICTED_GOALS,
+                        POINTS_EXACT_SCORE, POINTS_GOAL_DIFFERENCE, POINTS_WINNER)
 from .models import League, Match, Points, Prediction, User, TypingGroup, TypingGroupMember, Sport
 from .forms import RegistrationForm, TypingGroupForm, JoinGroupForm
 from .utils import assign_ranks, attach_predictions, parse_score
@@ -42,10 +43,12 @@ def match_list_view(request: HttpRequest) -> HttpResponse:
         my_upcoming = []
         other_upcoming = attach_predictions(request.user, upcoming)
 
-    finished = matches.filter(status=Match.Status.FINISHED).order_by("-scheduled_at")[:FINISHED_LIMIT]
+    finished = attach_predictions(
+        request.user, matches.filter(status=Match.Status.FINISHED).order_by("-scheduled_at")[:FINISHED_LIMIT])
     return render(request, "typer/match_list.html", {
         "my_upcoming": my_upcoming,
         "other_upcoming": other_upcoming,
+        "has_open_matches": any(not m.is_locked for m in [*my_upcoming, *other_upcoming]),
         "finished": finished,
         "upcoming_days": UPCOMING_DAYS,
         "finished_limit": FINISHED_LIMIT,
@@ -69,8 +72,44 @@ def register_view(request: HttpRequest) -> HttpResponse:
     return render(request, "typer/register.html", {"form": form})
 
 
+def global_ranking():
+    return assign_ranks(
+        User.objects.annotate(total_points=Sum("predictions__points__points_awarded"))
+        .filter(total_points__isnull=False)
+        .order_by("-total_points", "username")
+    )
+
+
+HOME_MATCHES = 6
+
+
 def home_view(request: HttpRequest) -> HttpResponse:
-    return render(request, "typer/home.html")
+    now = timezone.now()
+    upcoming = (Match.objects.filter(status=Match.Status.SCHEDULED, scheduled_at__gt=now)
+                .select_related("league", "home_team", "away_team").order_by("scheduled_at", "id"))
+    ranking = global_ranking()
+    context = {
+        "top_ranking": ranking[:RANKING_PREVIEW],
+        "points": {
+            "exact": POINTS_EXACT_SCORE, "difference": POINTS_GOAL_DIFFERENCE, "winner": POINTS_WINNER,
+        },
+    }
+    if request.user.is_authenticated:
+        my_leagues = list(request.user.typing_groups.values_list("league_id", flat=True))
+        if my_leagues:
+            upcoming = upcoming.filter(league_id__in=my_leagues)
+        todo = upcoming.exclude(predictions__user=request.user)[:HOME_MATCHES]
+        mine = next((row for row in ranking if row.id == request.user.id), None)
+        context.update({
+            "todo": attach_predictions(request.user, todo),
+            "my_points": mine.total_points if mine else 0,
+            "my_rank": mine.rank if mine else None,
+            "ranked_players": len(ranking),
+            "predictions_count": request.user.predictions.count(),
+        })
+    else:
+        context["next_matches"] = attach_predictions(request.user, upcoming[:HOME_MATCHES])
+    return render(request, "typer/home.html", context)
 
 
 @login_required
@@ -131,11 +170,7 @@ def predict_bulk_view(request: HttpRequest) -> HttpResponse:
 
 
 def ranking_view(request: HttpRequest) -> HttpResponse:
-    users = assign_ranks(
-        User.objects.annotate(total_points=Sum("predictions__points__points_awarded"))
-        .filter(total_points__isnull=False)
-        .order_by("-total_points", "username")
-    )
+    users = global_ranking()
 
     # jedno zapytanie na wszystkie ligi, grupowanie w Pythonie
     rows = (

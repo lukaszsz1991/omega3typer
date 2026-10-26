@@ -20,7 +20,6 @@ class OutcomeTests(TestCase):
 
 
 class BaseTestCase(TestCase):
-    """Wspólne dane: użytkownik, sport, drużyny, liga i mecz w przyszłości."""
 
     def setUp(self):
         self.user = User.objects.create_user(username="tester", password="haslo-testowe-123")
@@ -916,3 +915,81 @@ class MatchAdminTests(BaseTestCase):
 
     def test_add_form_loads(self):
         self.assertEqual(self.client.get(reverse("admin:typer_match_add")).status_code, 200)
+
+
+class HomePageTests(BaseTestCase):
+    def test_anonymous_sees_hero_next_matches_and_scoring(self):
+        response = self.client.get(reverse("typer:home"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Załóż konto")
+        self.assertContains(response, self.home.name)
+        self.assertNotContains(response, f'name="home_{self.match.id}"')
+        self.assertEqual(response.context["points"]["exact"], POINTS_EXACT_SCORE)
+
+    def test_logged_in_sees_matches_to_predict(self):
+        self.client.login(username="tester", password="haslo-testowe-123")
+        response = self.client.get(reverse("typer:home"))
+        self.assertContains(response, f'name="home_{self.match.id}"')
+        self.assertEqual(list(response.context["todo"]), [self.match])
+        self.assertEqual(response.context["my_points"], 0)
+        self.assertIsNone(response.context["my_rank"])
+
+    def test_predicted_match_leaves_the_todo_list(self):
+        self.predict(1, 0)
+        self.client.login(username="tester", password="haslo-testowe-123")
+        response = self.client.get(reverse("typer:home"))
+        self.assertEqual(list(response.context["todo"]), [])
+        self.assertEqual(response.context["predictions_count"], 1)
+
+    def test_stats_show_points_and_rank(self):
+        self.predict(2, 1)
+        self.finish(2, 1)
+        self.client.login(username="tester", password="haslo-testowe-123")
+        context = self.client.get(reverse("typer:home")).context
+        self.assertEqual((context["my_points"], context["my_rank"]), (POINTS_EXACT_SCORE, 1))
+
+    def test_todo_prefers_leagues_from_users_groups(self):
+        other_league = League.objects.create(
+            name="Inna", sport=self.sport, year=date.today().year + 1,
+            end_date=date.today() + timedelta(days=300))
+        other = Match.objects.create(league=other_league, home_team=self.home, away_team=self.away,
+                                     scheduled_at=timezone.now() + timedelta(hours=3))
+        group = TypingGroup.objects.create(name="G", league=self.league, owner=self.user, is_private=True)
+        TypingGroupMember.objects.create(user=self.user, group=group)
+        self.client.login(username="tester", password="haslo-testowe-123")
+        todo = list(self.client.get(reverse("typer:home")).context["todo"])
+        self.assertEqual(todo, [self.match])
+        self.assertNotIn(other, todo)
+
+
+class AuthPagesTests(TestCase):
+    def test_auth_pages_render_with_styled_forms(self):
+        for name in ("typer:login", "typer:register", "typer:password_reset"):
+            with self.subTest(name=name):
+                response = self.client.get(reverse(name))
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, "auth-form")
+
+
+class MatchListSingleFormTests(BaseTestCase):
+    def test_both_upcoming_sections_share_one_form_and_one_save_button(self):
+        group = TypingGroup.objects.create(name="G", league=self.league, owner=self.user, is_private=True)
+        TypingGroupMember.objects.create(user=self.user, group=group)
+        other_league = League.objects.create(
+            name="Inna", sport=self.sport, year=date.today().year + 1,
+            end_date=date.today() + timedelta(days=300))
+        other = Match.objects.create(league=other_league, home_team=self.home, away_team=self.away,
+                                     scheduled_at=timezone.now() + timedelta(days=1))
+        self.client.login(username="tester", password="haslo-testowe-123")
+        response = self.client.get(reverse("typer:match_list"))
+        self.assertContains(response, f'name="home_{self.match.id}"')
+        self.assertContains(response, f'name="home_{other.id}"')
+        self.assertContains(response, 'class="btn btn-primary o3-save"', count=1)
+        self.assertContains(response, 'action="/predictions/save/"', count=1)
+
+    def test_no_save_button_without_open_matches(self):
+        self.match.status = Match.Status.FINISHED
+        self.match.home_score, self.match.away_score = 1, 0
+        self.match.save()
+        self.client.login(username="tester", password="haslo-testowe-123")
+        self.assertNotContains(self.client.get(reverse("typer:match_list")), 'class="btn btn-primary o3-save"')
