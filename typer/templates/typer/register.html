@@ -1,10 +1,15 @@
 {% extends "typer/base.html" %}
-{% block title %}Logowanie — Omega 3 Typer{% endblock %}
+{% block title %}Rejestracja — Omega 3 Typer{% endblock %}
 {% block content %}
-    <h1>Rejestracja</h1>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Zarejestruj</button>
-    </form>
+<div class="auth-wrap">
+    <h1 class="mb-3">Załóż konto</h1>
+    <div class="auth-panel">
+        <form method="post" class="auth-form">
+            {% csrf_token %}
+            {% include "typer/_auth_form.html" %}
+            <button type="submit" class="btn btn-primary w-100">Załóż konto</button>
+        </form>
+        <p class="mt-3 mb-0">Masz już konto? <a href="{% url 'typer:login' %}">Zaloguj się</a></p>
+    </div>
+</div>
 {% endblock %}

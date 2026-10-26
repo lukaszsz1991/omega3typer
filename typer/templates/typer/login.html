@@ -1,12 +1,16 @@
 {% extends "typer/base.html" %}
 {% block title %}Logowanie — Omega 3 Typer{% endblock %}
 {% block content %}
-    <h1>Logowanie</h1>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Zaloguj</button>
-    </form>
-    <p>Nie masz konta? <a href="{% url 'typer:register' %}">Zarejestruj się</a></p>
-    <p><a href="{% url 'typer:password_reset' %}">Nie pamiętasz hasła?</a></p>
+<div class="auth-wrap">
+    <h1 class="mb-3">Logowanie</h1>
+    <div class="auth-panel">
+        <form method="post" class="auth-form">
+            {% csrf_token %}
+            {% include "typer/_auth_form.html" %}
+            <button type="submit" class="btn btn-primary w-100">Zaloguj się</button>
+        </form>
+        <p class="mt-3 mb-1">Nie masz konta? <a href="{% url 'typer:register' %}">Załóż konto</a></p>
+        <p class="mb-0"><a href="{% url 'typer:password_reset' %}">Nie pamiętasz hasła?</a></p>
+    </div>
+</div>
 {% endblock %}

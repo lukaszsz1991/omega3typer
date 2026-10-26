@@ -14,6 +14,7 @@ class PredictionAdmin(admin.ModelAdmin):
     def has_change_permission(self, request, obj=None):
         return False
 
+
 @admin.register(Points)
 class PointsAdmin(admin.ModelAdmin):
     list_display = ("prediction", "points_awarded")
@@ -25,11 +26,13 @@ class PointsAdmin(admin.ModelAdmin):
     def has_change_permission(self, request, obj=None):
         return False
 
+
 @admin.register(Team)
 class TeamAdmin(admin.ModelAdmin):
     list_display = ("name", "sport")
     list_filter = ("sport",)
     search_fields = ("name",)
+
 
 class TypingGroupMemberInline(admin.TabularInline):
     model = TypingGroupMember

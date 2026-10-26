@@ -3,68 +3,35 @@
 {% block title %}{{ group.name }} — Omega 3 Typer{% endblock %}
 
 {% block content %}
-    <h2 class="mb-1">{{ group.name }}</h2>
-    <p class="text-muted mb-1">
-        Liga: {{ group.league }}
-        {% if not group.is_active %}<span class="badge bg-secondary">Sezon zakończony</span>{% endif %}
+    <h1 class="mb-1">{{ group.name }}</h1>
+    <p class="text-muted mb-4">
+        {{ group.league }}, właściciel: {{ group.owner|default:"brak" }}
+        {% if not group.is_active %}<span class="badge bg-secondary ms-1">Sezon zakończony</span>{% endif %}
     </p>
-    <p class="text-muted">Właściciel: {{ group.owner|default:"brak" }}</p>
 
     {% if group.invite_code %}
-        <div class="alert alert-info">
-            Kod zaproszenia: <strong>{{ group.invite_code }}</strong><br>
-            <small>Przekaż go znajomym, żeby mogli dołączyć do grupy.</small>
+        <div class="alert alert-info d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <span>Kod zaproszenia: <strong class="fs-5">{{ group.invite_code }}</strong><br>
+                <small>Przekaż go znajomym, żeby mogli dołączyć do grupy.</small></span>
+            {% if is_owner and group.is_private %}
+                <form method="post" action="{% url 'typer:group_regenerate_code' group.id %}">
+                    {% csrf_token %}
+                    <button class="btn btn-sm btn-outline-secondary"
+                            onclick="return confirm('Stary kod przestanie działać. Kontynuować?')">Nowy kod
+                    </button>
+                </form>
+            {% endif %}
         </div>
-        {% if is_owner and group.is_private %}
-            <form method="post" action="{% url 'typer:group_regenerate_code' group.id %}" class="d-inline">
-                {% csrf_token %}
-                <button class="btn btn-sm btn-outline-secondary"
-                        onclick="return confirm('Stary kod przestanie działać. Kontynuować?')">Nowy kod
-                </button>
-            </form>
-        {% endif %}
     {% endif %}
 
-    <h4 class="mt-4">Nadchodzące mecze</h4>
+    <h2 class="h4 mt-4 mb-1">Nadchodzące mecze</h2>
     <p class="text-muted small">Najbliższe {{ upcoming_days }} dni w rozgrywkach grupy.</p>
     {% include "typer/_prediction_list.html" with matches=upcoming empty_text="Brak meczów w najbliższych dniach." %}
 
-    <h4 class="mt-4">Ranking grupy</h4>
-    <table class="table table-striped align-middle">
-        <thead>
-        <tr>
-            <th>#</th>
-            <th>Użytkownik</th>
-            <th class="text-end">Punkty</th>
-            {% if is_owner %}
-                <th></th>{% endif %}
-        </tr>
-        </thead>
-        <tbody>
-        {% for u in ranking %}
-            <tr {% if u == user %}class="table-primary"{% endif %}>
-                <td>{{ u.rank }}</td>
-                <td>
-                    {{ u.username }}
-                    {% if u == group.owner %}<span class="badge bg-secondary">Administrator grupy</span>{% endif %}
-                </td>
-                <td class="text-end">{{ u.total_points }}</td>
-                {% if is_owner %}
-                    <td class="text-end">
-                        {% if u != user %}
-                            <form method="post" action="{% url 'typer:group_remove_member' group.id u.id %}">
-                                {% csrf_token %}
-                                <button class="btn btn-sm btn-outline-danger"
-                                        onclick="return confirm('Usunąć {{ u.username|escapejs }} z grupy?')">Usuń
-                                </button>
-                            </form>
-                        {% endif %}
-                    </td>
-                {% endif %}
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+    <h2 class="h4 mb-3">Ranking grupy</h2>
+    <div class="table-wrap">
+        {% include "typer/_ranking_table.html" with rows=ranking owner_id=group.owner_id with_actions=is_owner %}
+    </div>
 
     {% if not is_owner %}
         <form method="post" action="{% url 'typer:group_leave' group.id %}" class="mt-4">

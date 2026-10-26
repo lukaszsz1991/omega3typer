@@ -20,6 +20,7 @@ class OutcomeTests(TestCase):
 
 
 class BaseTestCase(TestCase):
+    """Wspólne dane: użytkownik, sport, drużyny, liga i mecz w przyszłości."""
 
     def setUp(self):
         self.user = User.objects.create_user(username="tester", password="haslo-testowe-123")
@@ -993,3 +994,4 @@ class MatchListSingleFormTests(BaseTestCase):
         self.match.save()
         self.client.login(username="tester", password="haslo-testowe-123")
         self.assertNotContains(self.client.get(reverse("typer:match_list")), 'class="btn btn-primary o3-save"')
+

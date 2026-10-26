@@ -1,16 +1,77 @@
 {% extends "typer/base.html" %}
-{% block title %}Logowanie — Omega 3 Typer{% endblock %}
+{% block title %}Omega 3 Typer{% endblock %}
 {% block content %}
-    {% if user.is_authenticated %}
-        <h1>Witaj, {{ user.username }}!</h1>
-        <p><a href="{% url 'typer:match_list' %}">Lista meczów</a></p>
-        <form method="post" action="{% url 'typer:logout' %}">
-            {% csrf_token %}
-            <button type="submit">Wyloguj</button>
-        </form>
-    {% else %}
-        <h1>Omega 3 Typer</h1>
-        <a href="{% url 'typer:login' %}">Zaloguj się</a> |
-        <a href="{% url 'typer:register' %}">Zarejestruj się</a>
-    {% endif %}
+{% if user.is_authenticated %}
+    <h1 class="mb-3">Cześć, {{ user.username }}</h1>
+    <div class="stats">
+        <div><div class="stat-value">{{ my_points }}</div><div class="stat-label">punktów</div></div>
+        <div>
+            <div class="stat-value">{% if my_rank %}{{ my_rank }}{% else %}–{% endif %}</div>
+            <div class="stat-label">{% if my_rank %}miejsce na {{ ranked_players }}{% else %}miejsce w rankingu{% endif %}</div>
+        </div>
+        <div><div class="stat-value">{{ predictions_count }}</div><div class="stat-label">wytypowanych meczów</div></div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="section-head" style="margin-top:0">
+                <h2 class="h3">Do wytypowania</h2>
+                <a href="{% url 'typer:match_list' %}" class="small">Wszystkie mecze</a>
+            </div>
+            {% include "typer/_prediction_list.html" with matches=todo show_league=True empty_text="Wszystkie najbliższe mecze masz już wytypowane." %}
+        </div>
+        <div class="col-lg-5">
+            <div class="section-head" style="margin-top:0">
+                <h2 class="h3">Najlepsi gracze</h2>
+                <a href="{% url 'typer:ranking' %}" class="small">Pełny ranking</a>
+            </div>
+            <div class="table-wrap">
+                {% include "typer/_ranking_table.html" with rows=top_ranking compact=True empty_text="Ranking pojawi się po pierwszych rozliczonych meczach." %}
+            </div>
+        </div>
+    </div>
+{% else %}
+    <section class="hero">
+        <div>
+            <h1>Wytypuj wynik. Wyprzedź znajomych.</h1>
+            <p class="lead">Typuj dokładne wyniki meczów, zbieraj punkty i sprawdzaj, kto z Twojej paczki zna się na piłce najlepiej.</p>
+            <div class="d-flex flex-wrap gap-2 mt-4">
+                <a href="{% url 'typer:register' %}" class="btn btn-primary btn-lg">Załóż konto</a>
+                <a href="{% url 'typer:login' %}" class="btn btn-outline-secondary btn-lg">Zaloguj się</a>
+            </div>
+        </div>
+        <div class="demo-board" aria-hidden="true">
+            <div class="match-name">Lech Poznań – Legia Warszawa</div>
+            <div class="demo-row"><span class="label">Twój typ</span><span class="tile">2:1</span></div>
+            <div class="demo-row"><span class="label">Wynik meczu</span><span class="tile dim">2:1</span></div>
+            <div class="demo-row"><span class="label">Dokładny wynik</span><span class="pts">{{ points.exact }} pkt</span></div>
+        </div>
+    </section>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="section-head" style="margin-top:0">
+                <h2 class="h3">Najbliższe mecze</h2>
+                <a href="{% url 'typer:match_list' %}" class="small">Wszystkie mecze</a>
+            </div>
+            {% include "typer/_prediction_list.html" with matches=next_matches show_league=True hide_save=True empty_text="Terminarz pojawi się wkrótce." %}
+        </div>
+        <div class="col-lg-5">
+            <div class="section-head" style="margin-top:0">
+                <h2 class="h3">Najlepsi gracze</h2>
+                <a href="{% url 'typer:ranking' %}" class="small">Pełny ranking</a>
+            </div>
+            <div class="table-wrap">
+                {% include "typer/_ranking_table.html" with rows=top_ranking compact=True empty_text="Ranking pojawi się po pierwszych rozliczonych meczach." %}
+            </div>
+        </div>
+    </div>
+
+    <h2 class="h3 mt-4">Jak liczymy punkty</h2>
+    <div class="scoring">
+        <div><div class="scoring-points">{{ points.exact }}<small>pkt</small></div><p>za dokładny wynik</p></div>
+        <div><div class="scoring-points">{{ points.difference }}<small>pkt</small></div><p>za trafioną różnicę bramek, także remis</p></div>
+        <div><div class="scoring-points">{{ points.winner }}<small>pkt</small></div><p>za trafionego zwycięzcę</p></div>
+    </div>
+{% endif %}
 {% endblock %}

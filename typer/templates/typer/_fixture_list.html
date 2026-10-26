@@ -1,0 +1,11 @@
+<div class="fx-list">
+    {% regroup matches by scheduled_at|date:"Y-m-d" as days %}
+    {% for day in days %}
+        <div class="fx-day-head">{{ day.list.0.scheduled_at|date:"l, j E" }}</div>
+        {% for match in day.list %}
+            {% include "typer/_upcoming_match.html" %}
+        {% endfor %}
+    {% empty %}
+        <div class="fx-empty">{{ empty_text|default:"Brak meczów." }}</div>
+    {% endfor %}
+</div>

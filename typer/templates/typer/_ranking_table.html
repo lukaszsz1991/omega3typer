@@ -1,0 +1,41 @@
+<table class="table rank-table align-middle">
+    {% if not compact %}
+        <thead>
+        <tr>
+            <th style="width: 3.5rem;">#</th>
+            <th>Gracz</th>
+            <th class="text-end">Punkty</th>
+            {% if with_actions %}<th></th>{% endif %}
+        </tr>
+        </thead>
+    {% endif %}
+    <tbody>
+    {% for u in rows %}
+        <tr {% if u.username == user.username %}class="me"{% endif %}>
+            <td style="width: 3.5rem;"><span class="rk {% if u.rank <= 3 %}rk-{{ u.rank }}{% endif %}">{{ u.rank }}</span></td>
+            <td>
+                {{ u.username }}
+                {% if u.username == user.username %}<span class="badge bg-primary ms-1">Ty</span>{% endif %}
+                {% if owner_id and u.id == owner_id %}<span class="badge bg-secondary ms-1">Administrator grupy</span>{% endif %}
+            </td>
+            <td class="total">{{ u.total_points }}</td>
+            {% if with_actions %}
+                <td class="text-end">
+                    {% if u.username != user.username %}
+                        <form method="post" action="{% url 'typer:group_remove_member' group.id u.id %}">
+                            {% csrf_token %}
+                            <button class="btn btn-sm btn-outline-danger"
+                                    onclick="return confirm('Usunąć {{ u.username|escapejs }} z grupy?')">Usuń
+                            </button>
+                        </form>
+                    {% endif %}
+                </td>
+            {% endif %}
+        </tr>
+    {% empty %}
+        <tr>
+            <td colspan="4" class="text-muted">{{ empty_text|default:"Brak danych." }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>

@@ -26,32 +26,30 @@
             <a href="{% url 'typer:match_list' %}" class="btn btn-outline-secondary w-100">Wyczyść</a>
         </div>
     </form>
-    {% if user.is_authenticated %}
-        <h2 class="mb-1">Mecze Twoich grup</h2>
-        <p class="text-muted small">Najbliższe {{ upcoming_days }} dni, rozgrywki wybrane w Twoich grupach.</p>
-        {% include "typer/_prediction_list.html" with matches=my_upcoming empty_text="Brak meczów." %}
-    {% endif %}
-
-    <h2 class="mb-1">{% if user.is_authenticated %}Pozostałe nadchodzące mecze{% else %}Nadchodzące
-        mecze{% endif %}</h2>
-    <p class="text-muted small">Najbliższe {{ upcoming_days }} dni.</p>
-    {% include "typer/_prediction_list.html" with matches=other_upcoming empty_text="Brak nadchodzących meczów." %}
-
-    <h2 class="mb-1">Zakończone mecze</h2>
-    <p class="text-muted small">Ostatnie {{ finished_limit }}.</p>
-    <div class="list-group">
-        {% for match in finished %}
-            <div class="list-group-item d-flex justify-content-between align-items-center">
-                <div>
-                    <small class="text-muted">{{ match.league }}</small><br>
-                    <a href="{% url 'typer:match_detail' match.id %}" class="text-decoration-none">
-                        {{ match.home_team }} {{ match.home_score }}:{{ match.away_score }} {{ match.away_team }}
-                    </a>
-                </div>
-                <span class="badge bg-success">{{ match.scheduled_at|date:"d.m.Y" }}</span>
+    <form method="post" action="{% url 'typer:predict_bulk' %}" class="o3-bulk">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        {% if user.is_authenticated %}
+            <h2 class="h3 mb-1">Mecze Twoich grup</h2>
+            <p class="text-muted small">Najbliższe {{ upcoming_days }} dni, rozgrywki wybrane w Twoich grupach.</p>
+            <div class="mb-5">
+                {% include "typer/_fixture_list.html" with matches=my_upcoming empty_text="Brak meczów." show_league=True %}
             </div>
-        {% empty %}
-            <div class="list-group-item text-muted">Brak zakończonych meczów.</div>
-        {% endfor %}
-    </div>
+        {% endif %}
+
+        <h2 class="h3 mb-1">{% if user.is_authenticated %}Pozostałe nadchodzące mecze{% else %}Nadchodzące mecze{% endif %}</h2>
+        <p class="text-muted small">Najbliższe {{ upcoming_days }} dni.</p>
+        {% include "typer/_fixture_list.html" with matches=other_upcoming empty_text="Brak nadchodzących meczów." show_league=True %}
+        {% if user.is_authenticated and has_open_matches %}
+            <div class="save-bar">
+                <small class="text-muted">Wpisz wyniki i zapisz wszystkie typy jednym kliknięciem.</small>
+                <button type="submit" class="btn btn-primary o3-save">Zapisz typy</button>
+            </div>
+        {% endif %}
+    </form>
+    <div class="mb-5"></div>
+
+    <h2 class="h3 mb-1">Zakończone mecze</h2>
+    <p class="text-muted small">Ostatnie {{ finished_limit }}.</p>
+    {% include "typer/_fixture_list.html" with matches=finished empty_text="Brak zakończonych meczów." show_league=True %}
 {% endblock %}

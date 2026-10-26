@@ -2,35 +2,12 @@
 {% block title %}{{ league }} — Omega 3 Typer{% endblock %}
 
 {% block content %}
-    <h1 class="h3 mb-4">{{ league.name }} <small class="text-muted">{{ league.sport.name }}</small></h1>
-    <h3 class="mb-3">Ranking ligi</h3>
-    <div class="table-responsive mb-5">
-        <table class="table table-striped align-middle">
-            <thead>
-            <tr>
-                <th style="width: 3rem;">#</th>
-                <th>Użytkownik</th>
-                <th class="text-end">Punkty</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for u in ranking %}
-                <tr {% if u == user %}class="table-primary"{% endif %}>
-                    <td>{{ u.rank }}</td>
-                    <td>{{ u.username }}{% if u == user %} <span class="badge bg-primary ms-1">Ty</span>{% endif %}</td>
-                    <td class="text-end fw-bold">{{ u.total_points }}</td>
-                </tr>
-            {% empty %}
-                <tr>
-                    <td colspan="3" class="text-muted">Brak rozliczonych typów w tej lidze.</td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    <h2 class="h5 mb-3">Mecze{% if selected_round %} — kolejka {{ selected_round }}{% elif unassigned %} — bez kolejki{% endif %}</h2>
+    <h1 class="mb-1">{{ league.name }}</h1>
+    <p class="text-muted mb-4">{{ league.sport.name }}, sezon {{ league.year }}</p>
+
+    <h2 class="h4 mb-3">Mecze{% if selected_round %}, kolejka {{ selected_round }}{% elif unassigned %}, bez kolejki{% endif %}</h2>
     {% if round_numbers %}
-        <form method="get" class="d-flex align-items-center gap-2 mb-3">
+        <form method="get" class="round-nav d-flex align-items-center gap-2 mb-3">
             {% if prev_round %}
                 <a class="btn btn-outline-secondary btn-sm" href="?round={{ prev_round }}"
                    aria-label="Poprzednia kolejka">&lsaquo;</a>
@@ -55,4 +32,9 @@
         </form>
     {% endif %}
     {% include "typer/_prediction_list.html" with matches=matches hide_save=no_open_matches empty_text="Brak meczów w tej kolejce." extra_class="mb-4" %}
+
+    <h2 class="h4 mb-3 mt-4">Ranking rozgrywek</h2>
+    <div class="table-wrap">
+        {% include "typer/_ranking_table.html" with rows=ranking empty_text="Brak rozliczonych typów w tej lidze." %}
+    </div>
 {% endblock %}
