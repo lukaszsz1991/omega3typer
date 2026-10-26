@@ -1,0 +1,202 @@
+﻿league,year,round,home_team,away_team,scheduled_at,home_score,away_score
+Premier League,2027,1,Arsenal,Coventry City,2026-08-21 20:00,3,0
+Premier League,2027,1,Hull City,Manchester United,2026-08-22 12:30,2,0
+Premier League,2027,1,Everton,Crystal Palace,2026-08-22 15:00,2,0
+Premier League,2027,1,Ipswich Town,Sunderland,2026-08-22 15:00,2,1
+Premier League,2027,1,Nottingham Forest,Leeds United,2026-08-22 15:00,0,1
+Premier League,2027,1,Brentford,Tottenham Hotspur,2026-08-22 17:30,3,0
+Premier League,2027,1,Brighton & Hove Albion,Aston Villa,2026-08-23 14:00,4,0
+Premier League,2027,1,Manchester City,AFC Bournemouth,2026-08-23 14:00,2,1
+Premier League,2027,1,Newcastle United,Liverpool,2026-08-23 16:30,2,2
+Premier League,2027,1,Fulham,Chelsea,2026-08-24 20:00,2,3
+Premier League,2027,2,Crystal Palace,Manchester City,2026-08-28 20:00,1,4
+Premier League,2027,2,Liverpool,Nottingham Forest,2026-08-29 12:30,2,2
+Premier League,2027,2,AFC Bournemouth,Everton,2026-08-29 15:00,1,1
+Premier League,2027,2,Coventry City,Hull City,2026-08-29 15:00,0,1
+Premier League,2027,2,Tottenham Hotspur,Newcastle United,2026-08-29 17:30,0,2
+Premier League,2027,2,Chelsea,Brighton & Hove Albion,2026-08-30 14:00,4,3
+Premier League,2027,2,Leeds United,Brentford,2026-08-30 14:00,1,1
+Premier League,2027,2,Sunderland,Fulham,2026-08-30 14:00,1,0
+Premier League,2027,2,Manchester United,Ipswich Town,2026-08-30 16:30,5,2
+Premier League,2027,2,Aston Villa,Arsenal,2026-08-31 20:00,0,1
+Premier League,2027,3,Ipswich Town,Liverpool,2026-09-04 20:00,0,2
+Premier League,2027,3,Newcastle United,AFC Bournemouth,2026-09-05 12:30,2,2
+Premier League,2027,3,Brentford,Sunderland,2026-09-05 15:00,1,1
+Premier League,2027,3,Brighton & Hove Albion,Leeds United,2026-09-05 15:00,1,1
+Premier League,2027,3,Fulham,Crystal Palace,2026-09-05 15:00,2,3
+Premier League,2027,3,Manchester City,Coventry City,2026-09-05 15:00,1,0
+Premier League,2027,3,Nottingham Forest,Tottenham Hotspur,2026-09-05 15:00,0,0
+Premier League,2027,3,Hull City,Aston Villa,2026-09-05 17:30,0,0
+Premier League,2027,3,Everton,Manchester United,2026-09-06 14:00,2,2
+Premier League,2027,3,Arsenal,Chelsea,2026-09-06 16:30,2,1
+Premier League,2027,4,Aston Villa,Nottingham Forest,2026-09-12 15:00,1,2
+Premier League,2027,4,AFC Bournemouth,Brentford,2026-09-12 15:00,2,2
+Premier League,2027,4,Chelsea,Hull City,2026-09-12 15:00,2,2
+Premier League,2027,4,Crystal Palace,Ipswich Town,2026-09-12 15:00,2,3
+Premier League,2027,4,Liverpool,Fulham,2026-09-12 15:00,0,0
+Premier League,2027,4,Tottenham Hotspur,Everton,2026-09-12 17:30,0,0
+Premier League,2027,4,Sunderland,Arsenal,2026-09-12 20:00,0,2
+Premier League,2027,4,Coventry City,Brighton & Hove Albion,2026-09-13 14:00,0,5
+Premier League,2027,4,Manchester United,Manchester City,2026-09-13 16:30,0,1
+Premier League,2027,4,Leeds United,Newcastle United,2026-09-14 20:00,4,1
+Premier League,2027,5,Brentford,Chelsea,2026-09-18 20:00,3,0
+Premier League,2027,5,Tottenham Hotspur,Aston Villa,2026-09-19 12:30,2,3
+Premier League,2027,5,Brighton & Hove Albion,Arsenal,2026-09-19 15:00,3,0
+Premier League,2027,5,Everton,Ipswich Town,2026-09-19 15:00,1,0
+Premier League,2027,5,Newcastle United,Hull City,2026-09-19 15:00,2,1
+Premier League,2027,5,Nottingham Forest,Coventry City,2026-09-19 17:30,0,1
+Premier League,2027,5,AFC Bournemouth,Liverpool,2026-09-20 14:00,0,1
+Premier League,2027,5,Leeds United,Crystal Palace,2026-09-20 14:00,0,0
+Premier League,2027,5,Manchester City,Sunderland,2026-09-20 14:00,5,3
+Premier League,2027,5,Fulham,Manchester United,2026-09-20 16:30,1,1
+Premier League,2027,6,Arsenal,Leeds United,2026-10-10 12:30,2,1
+Premier League,2027,6,Aston Villa,Brentford,2026-10-10 15:00,2,2
+Premier League,2027,6,Chelsea,AFC Bournemouth,2026-10-10 15:00,5,1
+Premier League,2027,6,Ipswich Town,Fulham,2026-10-10 15:00,2,1
+Premier League,2027,6,Sunderland,Brighton & Hove Albion,2026-10-10 15:00,0,2
+Premier League,2027,6,Manchester United,Tottenham Hotspur,2026-10-10 17:30,1,1
+Premier League,2027,6,Crystal Palace,Nottingham Forest,2026-10-11 14:00,3,1
+Premier League,2027,6,Hull City,Everton,2026-10-11 14:00,2,2
+Premier League,2027,6,Liverpool,Manchester City,2026-10-11 16:30,0,3
+Premier League,2027,6,Coventry City,Newcastle United,2026-10-12 20:00,4,1
+Premier League,2027,7,Everton,Chelsea,2026-10-17 12:30,0,2
+Premier League,2027,7,Brentford,Liverpool,2026-10-17 15:00,1,2
+Premier League,2027,7,Fulham,Hull City,2026-10-17 15:00,1,0
+Premier League,2027,7,Manchester City,Ipswich Town,2026-10-17 15:00,3,2
+Premier League,2027,7,Newcastle United,Aston Villa,2026-10-17 17:30,0,1
+Premier League,2027,7,AFC Bournemouth,Sunderland,2026-10-18 14:00,2,0
+Premier League,2027,7,Brighton & Hove Albion,Crystal Palace,2026-10-18 14:00,5,0
+Premier League,2027,7,Leeds United,Manchester United,2026-10-18 14:00,1,1
+Premier League,2027,7,Nottingham Forest,Arsenal,2026-10-18 16:30,0,1
+Premier League,2027,7,Tottenham Hotspur,Coventry City,2026-10-19 20:00,3,1
+Premier League,2027,8,Ipswich Town,Nottingham Forest,2026-10-23 20:00,,
+Premier League,2027,8,Aston Villa,Manchester City,2026-10-24 12:30,,
+Premier League,2027,8,Arsenal,Everton,2026-10-24 15:00,,
+Premier League,2027,8,Coventry City,Fulham,2026-10-24 15:00,,
+Premier League,2027,8,Chelsea,Tottenham Hotspur,2026-10-24 17:30,,
+Premier League,2027,8,Crystal Palace,Newcastle United,2026-10-25 14:00,,
+Premier League,2027,8,Hull City,Brentford,2026-10-25 14:00,,
+Premier League,2027,8,Liverpool,Brighton & Hove Albion,2026-10-25 14:00,,
+Premier League,2027,8,Manchester United,AFC Bournemouth,2026-10-25 14:00,,
+Premier League,2027,8,Sunderland,Leeds United,2026-10-25 16:30,,
+Premier League,2027,9,Chelsea,Manchester United,2026-10-31 12:30,,
+Premier League,2027,9,AFC Bournemouth,Leeds United,2026-10-31 15:00,,
+Premier League,2027,9,Brentford,Nottingham Forest,2026-10-31 15:00,,
+Premier League,2027,9,Coventry City,Sunderland,2026-10-31 15:00,,
+Premier League,2027,9,Hull City,Ipswich Town,2026-10-31 15:00,,
+Premier League,2027,9,Manchester City,Brighton & Hove Albion,2026-10-31 15:00,,
+Premier League,2027,9,Tottenham Hotspur,Crystal Palace,2026-10-31 17:30,,
+Premier League,2027,9,Aston Villa,Fulham,2026-10-31 20:00,,
+Premier League,2027,9,Liverpool,Arsenal,2026-11-01 16:30,,
+Premier League,2027,9,Newcastle United,Everton,2026-11-02 20:00,,
+Premier League,2027,10,Everton,Coventry City,2026-11-06 20:00,,
+Premier League,2027,10,Leeds United,Tottenham Hotspur,2026-11-07 12:30,,
+Premier League,2027,10,Arsenal,Hull City,2026-11-07 15:00,,
+Premier League,2027,10,Fulham,Newcastle United,2026-11-07 15:00,,
+Premier League,2027,10,Nottingham Forest,Manchester City,2026-11-07 17:30,,
+Premier League,2027,10,Brighton & Hove Albion,Brentford,2026-11-08 14:00,,
+Premier League,2027,10,Crystal Palace,Liverpool,2026-11-08 14:00,,
+Premier League,2027,10,Ipswich Town,AFC Bournemouth,2026-11-08 14:00,,
+Premier League,2027,10,Sunderland,Chelsea,2026-11-08 14:00,,
+Premier League,2027,10,Manchester United,Aston Villa,2026-11-08 16:30,,
+Premier League,2027,11,Manchester City,Fulham,2026-11-21 12:30,,
+Premier League,2027,11,Aston Villa,Sunderland,2026-11-21 15:00,,
+Premier League,2027,11,AFC Bournemouth,Nottingham Forest,2026-11-21 15:00,,
+Premier League,2027,11,Chelsea,Leeds United,2026-11-21 15:00,,
+Premier League,2027,11,Coventry City,Crystal Palace,2026-11-21 15:00,,
+Premier League,2027,11,Tottenham Hotspur,Ipswich Town,2026-11-21 15:00,,
+Premier League,2027,11,Newcastle United,Arsenal,2026-11-21 17:30,,
+Premier League,2027,11,Hull City,Brighton & Hove Albion,2026-11-22 14:00,,
+Premier League,2027,11,Liverpool,Manchester United,2026-11-22 16:30,,
+Premier League,2027,11,Brentford,Everton,2026-11-23 20:00,,
+Premier League,2027,12,Nottingham Forest,Chelsea,2026-11-27 20:00,,
+Premier League,2027,12,Leeds United,Coventry City,2026-11-28 15:00,,
+Premier League,2027,12,Manchester United,Brentford,2026-11-28 15:00,,
+Premier League,2027,12,Ipswich Town,Aston Villa,2026-11-28 17:30,,
+Premier League,2027,12,Everton,Liverpool,2026-11-29 12:00,,
+Premier League,2027,12,Brighton & Hove Albion,Newcastle United,2026-11-29 14:05,,
+Premier League,2027,12,Crystal Palace,Hull City,2026-11-29 14:05,,
+Premier League,2027,12,Fulham,AFC Bournemouth,2026-11-29 14:05,,
+Premier League,2027,12,Sunderland,Tottenham Hotspur,2026-11-29 14:05,,
+Premier League,2027,12,Arsenal,Manchester City,2026-11-29 16:30,,
+Premier League,2027,13,Coventry City,Ipswich Town,2026-12-01 20:00,,
+Premier League,2027,13,Chelsea,Crystal Palace,2026-12-02 19:30,,
+Premier League,2027,13,Hull City,Nottingham Forest,2026-12-02 19:30,,
+Premier League,2027,13,Liverpool,Sunderland,2026-12-02 19:30,,
+Premier League,2027,13,Manchester City,Leeds United,2026-12-02 19:30,,
+Premier League,2027,13,Aston Villa,Everton,2026-12-02 20:15,,
+Premier League,2027,13,AFC Bournemouth,Brighton & Hove Albion,2026-12-02 20:15,,
+Premier League,2027,13,Brentford,Arsenal,2026-12-02 20:15,,
+Premier League,2027,13,Newcastle United,Manchester United,2026-12-02 20:15,,
+Premier League,2027,13,Tottenham Hotspur,Fulham,2026-12-03 20:00,,
+Premier League,2027,14,Chelsea,Liverpool,2026-12-05 12:30,,
+Premier League,2027,14,Aston Villa,Crystal Palace,2026-12-05 15:00,,
+Premier League,2027,14,AFC Bournemouth,Hull City,2026-12-05 15:00,,
+Premier League,2027,14,Leeds United,Ipswich Town,2026-12-05 15:00,,
+Premier League,2027,14,Manchester United,Coventry City,2026-12-05 15:00,,
+Premier League,2027,14,Nottingham Forest,Brighton & Hove Albion,2026-12-05 17:30,,
+Premier League,2027,14,Brentford,Manchester City,2026-12-05 20:00,,
+Premier League,2027,14,Everton,Fulham,2026-12-06 14:00,,
+Premier League,2027,14,Newcastle United,Sunderland,2026-12-06 14:00,,
+Premier League,2027,14,Tottenham Hotspur,Arsenal,2026-12-06 16:30,,
+Premier League,2027,15,Fulham,Brentford,2026-12-12 15:00,,
+Premier League,2027,15,Hull City,Tottenham Hotspur,2026-12-12 15:00,,
+Premier League,2027,15,Ipswich Town,Newcastle United,2026-12-12 15:00,,
+Premier League,2027,15,Liverpool,Leeds United,2026-12-12 15:00,,
+Premier League,2027,15,Manchester City,Chelsea,2026-12-12 17:30,,
+Premier League,2027,15,Arsenal,AFC Bournemouth,2026-12-13 14:00,,
+Premier League,2027,15,Brighton & Hove Albion,Everton,2026-12-13 14:00,,
+Premier League,2027,15,Sunderland,Nottingham Forest,2026-12-13 14:00,,
+Premier League,2027,15,Coventry City,Aston Villa,2026-12-13 16:30,,
+Premier League,2027,15,Crystal Palace,Manchester United,2026-12-13 19:00,,
+Premier League,2027,15,Hull City,Tottenham Hotspur,2026-12-14 20:00,,
+Premier League,2027,16,Brentford,Newcastle United,2026-12-19 12:30,,
+Premier League,2027,16,AFC Bournemouth,Coventry City,2026-12-19 15:00,,
+Premier League,2027,16,Leeds United,Fulham,2026-12-19 15:00,,
+Premier League,2027,16,Manchester City,Hull City,2026-12-19 15:00,,
+Premier League,2027,16,Nottingham Forest,Everton,2026-12-19 15:00,,
+Premier League,2027,16,Liverpool,Tottenham Hotspur,2026-12-19 17:30,,
+Premier League,2027,16,Brighton & Hove Albion,Ipswich Town,2026-12-20 14:00,,
+Premier League,2027,16,Sunderland,Crystal Palace,2026-12-20 14:00,,
+Premier League,2027,16,Arsenal,Manchester United,2026-12-20 16:30,,
+Premier League,2027,16,Chelsea,Aston Villa,2026-12-21 20:00,,
+Premier League,2027,17,Aston Villa,Leeds United,2026-12-26 12:30,,
+Premier League,2027,17,Everton,Sunderland,2026-12-26 15:00,,
+Premier League,2027,17,Fulham,Brighton & Hove Albion,2026-12-26 15:00,,
+Premier League,2027,17,Ipswich Town,Brentford,2026-12-26 15:00,,
+Premier League,2027,17,Tottenham Hotspur,AFC Bournemouth,2026-12-26 15:00,,
+Premier League,2027,17,Hull City,Liverpool,2026-12-26 17:30,,
+Premier League,2027,17,Newcastle United,Manchester City,2026-12-26 20:00,,
+Premier League,2027,17,Coventry City,Chelsea,2026-12-27 14:00,,
+Premier League,2027,17,Manchester United,Nottingham Forest,2026-12-27 16:30,,
+Premier League,2027,17,Crystal Palace,Arsenal,2026-12-27 19:00,,
+Premier League,2027,18,Hull City,Leeds United,2026-12-29 19:30,,
+Premier League,2027,18,Tottenham Hotspur,Brighton & Hove Albion,2026-12-29 19:30,,
+Premier League,2027,18,Everton,Manchester City,2026-12-29 20:15,,
+Premier League,2027,18,Coventry City,Brentford,2026-12-30 19:30,,
+Premier League,2027,18,Crystal Palace,AFC Bournemouth,2026-12-30 19:30,,
+Premier League,2027,18,Fulham,Arsenal,2026-12-30 19:30,,
+Premier League,2027,18,Manchester United,Sunderland,2026-12-30 19:30,,
+Premier League,2027,18,Newcastle United,Nottingham Forest,2026-12-30 19:30,,
+Premier League,2027,18,Aston Villa,Liverpool,2026-12-30 20:15,,
+Premier League,2027,18,Ipswich Town,Chelsea,2026-12-30 20:15,,
+Premier League,2027,18,Leeds United,Everton,2027-01-01 20:00,,
+Premier League,2027,18,Brighton & Hove Albion,Manchester United,2027-01-02 12:30,,
+Premier League,2027,18,Arsenal,Ipswich Town,2027-01-02 15:00,,
+Premier League,2027,18,Brentford,Crystal Palace,2027-01-02 15:00,,
+Premier League,2027,18,Liverpool,Coventry City,2027-01-02 15:00,,
+Premier League,2027,18,Nottingham Forest,Fulham,2027-01-02 15:00,,
+Premier League,2027,18,Sunderland,Hull City,2027-01-02 15:00,,
+Premier League,2027,18,AFC Bournemouth,Aston Villa,2027-01-02 17:30,,
+Premier League,2027,18,Chelsea,Newcastle United,2027-01-03 14:00,,
+Premier League,2027,18,Manchester City,Tottenham Hotspur,2027-01-03 16:30,,
+Premier League,2027,18,Arsenal,Brentford,2027-01-05 19:30,,
+Premier League,2027,18,Brighton & Hove Albion,AFC Bournemouth,2027-01-05 19:30,,
+Premier League,2027,18,Everton,Aston Villa,2027-01-05 19:30,,
+Premier League,2027,18,Nottingham Forest,Hull City,2027-01-05 19:30,,
+Premier League,2027,18,Sunderland,Liverpool,2027-01-05 20:15,,
+Premier League,2027,18,Crystal Palace,Chelsea,2027-01-06 19:30,,
+Premier League,2027,18,Fulham,Tottenham Hotspur,2027-01-06 19:30,,
+Premier League,2027,18,Ipswich Town,Coventry City,2027-01-06 19:30,,
+Premier League,2027,18,Leeds United,Manchester City,2027-01-06 20:15,,
+Premier League,2027,18,Manchester United,Newcastle United,2027-01-07 20:00,,

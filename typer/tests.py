@@ -130,44 +130,143 @@ class MatchModelTests(BaseTestCase):
         self.assertTrue(self.match.is_locked)
 
 
-class PredictViewTests(BaseTestCase):
+class BulkPredictTests(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.client.login(username="tester", password="haslo-testowe-123")
-        self.url = reverse("typer:predict", args=[self.match.id])
+        self.url = reverse("typer:predict_bulk")
+        self.match2 = Match.objects.create(
+            league=self.league, home_team=self.away, away_team=self.home,
+            scheduled_at=timezone.now() + timedelta(days=2),
+        )
+
+    def post(self, data):
+        return self.client.post(self.url, data)
 
     def test_anonymous_user_is_redirected_to_login(self):
         self.client.logout()
-        response = self.client.get(self.url)
+        response = self.post({f"home_{self.match.id}": 1, f"away_{self.match.id}": 0})
         self.assertEqual(response.status_code, 302)
         self.assertIn("/login/", response.url)  # noqa
+        self.assertEqual(Prediction.objects.count(), 0)
 
-    def test_can_submit_prediction(self):
-        self.client.post(self.url, {"predicted_home": 2, "predicted_away": 1})
-        self.assertEqual(Prediction.objects.filter(user=self.user, match=self.match).count(), 1)
+    def test_get_is_not_allowed(self):
+        self.assertEqual(self.client.get(self.url).status_code, 405)
+
+    def test_saves_many_predictions_at_once(self):
+        self.post({
+            f"home_{self.match.id}": 2, f"away_{self.match.id}": 1,
+            f"home_{self.match2.id}": 0, f"away_{self.match2.id}": 0,
+        })
+        self.assertEqual(Prediction.objects.filter(user=self.user).count(), 2)
 
     def test_editing_does_not_create_second_prediction(self):
-        self.client.post(self.url, {"predicted_home": 2, "predicted_away": 1})
-        self.client.post(self.url, {"predicted_home": 0, "predicted_away": 0})
+        data = {f"home_{self.match.id}": 2, f"away_{self.match.id}": 1}
+        self.post(data)
+        self.post({f"home_{self.match.id}": 0, f"away_{self.match.id}": 0})
         predictions = Prediction.objects.filter(user=self.user, match=self.match)
         self.assertEqual(predictions.count(), 1)
         self.assertEqual(predictions.first().predicted_home, 0)
 
-    def test_cannot_predict_after_match_started(self):
-        self.match.scheduled_at = timezone.now() - timedelta(minutes=1)
-        self.match.save()
-        self.client.post(self.url, {"predicted_home": 2, "predicted_away": 1})
-        self.assertEqual(Prediction.objects.count(), 0)
+    def test_empty_pairs_are_skipped_and_do_not_delete(self):
+        self.predict(2, 1)
+        self.post({
+            f"home_{self.match.id}": "", f"away_{self.match.id}": "",
+            f"home_{self.match2.id}": "", f"away_{self.match2.id}": "",
+        })
+        self.assertEqual(Prediction.objects.count(), 1)
+        self.assertEqual(Prediction.objects.get().predicted_home, 2)
+
+    def test_invalid_row_does_not_block_valid_ones(self):
+        self.post({
+            f"home_{self.match.id}": 2, f"away_{self.match.id}": 1,
+            f"home_{self.match2.id}": 100, f"away_{self.match2.id}": 0,
+        })
+        self.assertEqual(list(Prediction.objects.values_list("match_id", flat=True)), [self.match.id])
 
     def test_invalid_scores_are_rejected(self):
-        for home, away in [(-1, 0), (0, -3), (100, 0), ("abc", 1), ("", "")]:
+        for home, away in [(-1, 0), (0, -3), (100, 0), ("abc", 1), (1, ""), ("", 2)]:
             with self.subTest(home=home, away=away):
-                self.client.post(self.url, {"predicted_home": home, "predicted_away": away})
+                self.post({f"home_{self.match.id}": home, f"away_{self.match.id}": away})
                 self.assertEqual(Prediction.objects.count(), 0)
 
     def test_boundary_scores_are_accepted(self):
-        self.client.post(self.url, {"predicted_home": 0, "predicted_away": 99})
+        self.post({f"home_{self.match.id}": 0, f"away_{self.match.id}": 99})
         self.assertEqual(Prediction.objects.count(), 1)
+
+    def test_cannot_predict_after_match_started(self):
+        self.match.scheduled_at = timezone.now() - timedelta(minutes=1)
+        self.match.save()
+        self.post({f"home_{self.match.id}": 2, f"away_{self.match.id}": 1})
+        self.assertEqual(Prediction.objects.count(), 0)
+
+    def test_unknown_match_and_garbage_keys_are_ignored(self):
+        response = self.post({"home_999999": 1, "away_999999": 1, "home_x": 1, "home_" + "9" * 30: 1})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(Prediction.objects.count(), 0)
+
+    def test_redirects_back_to_safe_next_only(self):
+        data = {f"home_{self.match.id}": 1, f"away_{self.match.id}": 0}
+        self.assertEqual(self.post({**data, "next": "/leagues/"}).url, "/leagues/")
+        self.assertEqual(self.post({**data, "next": "https://evil.example/"}).url, reverse("typer:match_list"))
+
+
+class SavedPredictionVisibilityTests(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        self.client.login(username="tester", password="haslo-testowe-123")
+        TypingGroup.objects.create(name="G", league=self.league, owner=self.user, is_private=True)
+        self.group = TypingGroup.objects.get(name="G")
+        TypingGroupMember.objects.create(user=self.user, group=self.group)
+
+    def pages(self):
+        return [
+            reverse("typer:match_list"),
+            reverse("typer:league_detail", args=[self.league.id]),
+            reverse("typer:group_detail", args=[self.group.id]),
+            reverse("typer:match_detail", args=[self.match.id]),
+        ]
+
+    def test_unsaved_match_has_inputs_and_no_change_button(self):
+        for url in self.pages():
+            with self.subTest(url=url):
+                response = self.client.get(url)
+                self.assertContains(response, f'name="home_{self.match.id}"')
+                self.assertContains(response, "Zapisz typy")
+                self.assertNotContains(response, 'o3-edit">')
+
+    def test_saved_prediction_is_shown_with_change_button(self):
+        self.predict(3, 2)
+        for url in self.pages():
+            with self.subTest(url=url):
+                response = self.client.get(url)
+                self.assertContains(response, "<strong>3:2</strong>", html=True)
+                self.assertContains(response, 'o3-edit">Zmień typ</button>')
+
+    def test_anonymous_sees_no_inputs(self):
+        self.client.logout()
+        for url in (self.pages()[0], self.pages()[1], self.pages()[3]):
+            with self.subTest(url=url):
+                response = self.client.get(url)
+                self.assertNotContains(response, f'name="home_{self.match.id}"')
+                self.assertNotContains(response, "Zapisz typy")
+
+    def test_group_lists_only_matches_of_its_league(self):
+        other_league = League.objects.create(
+            name="Inna", sport=self.sport, year=date.today().year + 1,
+            end_date=date.today() + timedelta(days=300))
+        other = Match.objects.create(league=other_league, home_team=self.home, away_team=self.away,
+                                     scheduled_at=timezone.now() + timedelta(days=1))
+        response = self.client.get(reverse("typer:group_detail", args=[self.group.id]))
+        self.assertContains(response, f'name="home_{self.match.id}"')
+        self.assertNotContains(response, f'name="home_{other.id}"')
+
+    def test_match_list_does_not_query_per_match(self):
+        for i in range(5):
+            Match.objects.create(league=self.league, home_team=self.home, away_team=self.away,
+                                 scheduled_at=timezone.now() + timedelta(days=1, hours=i))
+        with self.assertNumQueries(8):
+            self.client.get(reverse("typer:match_list"))
 
 
 class TypingGroupViewTests(BaseTestCase):
@@ -370,7 +469,7 @@ class LeagueViewTests(BaseTestCase):
     def test_league_detail_shows_upcoming_match(self):
         response = self.client.get(reverse("typer:league_detail", args=[self.league.id]))
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(list(response.context["upcoming"]), [self.match])
+        self.assertEqual(list(response.context["matches"]), [self.match])
 
     def test_league_ranking_lists_users_with_points(self):
         self.predict(2, 1)
@@ -379,6 +478,88 @@ class LeagueViewTests(BaseTestCase):
         ranking = response.context["ranking"]
         self.assertEqual([(u.username, u.total_points) for u in ranking],
                          [("tester", POINTS_EXACT_SCORE)])
+
+
+class LeagueRoundsTests(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        now = timezone.now()
+        self.r1 = self.make_match(1, now - timedelta(days=7), finished=(2, 1))
+        self.r2 = self.make_match(2, now + timedelta(days=2))
+        self.r3 = self.make_match(3, now + timedelta(days=9))
+        self.url = reverse("typer:league_detail", args=[self.league.id])
+
+    def make_match(self, round_number, when, finished=None):
+        match = Match.objects.create(league=self.league, home_team=self.home, away_team=self.away,
+                                     scheduled_at=when, round=round_number)
+        if finished:
+            match.home_score, match.away_score = finished
+            match.status = Match.Status.FINISHED
+            match.save()
+        return match
+
+    def get(self, **params):
+        return self.client.get(self.url, params).context
+
+    def test_defaults_to_first_round_with_unplayed_matches(self):
+        context = self.get()
+        self.assertEqual(context["selected_round"], 2)
+        self.assertEqual(list(context["matches"]), [self.r2])
+        self.assertEqual(context["round_numbers"], [1, 2, 3])
+        self.assertEqual((context["prev_round"], context["next_round"]), (1, 3))
+
+    def test_selects_requested_round_including_finished(self):
+        context = self.get(round=1)
+        self.assertEqual(list(context["matches"]), [self.r1])
+        self.assertIsNone(context["prev_round"])
+        self.assertTrue(context["no_open_matches"])
+
+    def test_garbage_round_falls_back_to_default(self):
+        for value in ("abc", "99", "-1"):
+            with self.subTest(value=value):
+                self.assertEqual(self.get(round=value)["selected_round"], 2)
+
+    def test_defaults_to_last_round_when_all_finished(self):
+        for match in (self.r2, self.r3):
+            match.home_score, match.away_score, match.status = 0, 0, Match.Status.FINISHED
+            match.save()
+        self.assertEqual(self.get()["selected_round"], 3)
+
+    def test_matches_without_round_are_in_separate_group(self):
+        # mecz z BaseTestCase nie ma kolejki
+        context = self.get(round="none")
+        self.assertTrue(context["has_unassigned"])
+        self.assertTrue(context["unassigned"])
+        self.assertIsNone(context["selected_round"])
+        self.assertEqual(list(context["matches"]), [self.match])
+
+    def test_none_falls_back_when_no_match_is_unassigned(self):
+        self.match.round = 1
+        self.match.save()
+        context = self.get(round="none")
+        self.assertFalse(context["has_unassigned"])
+        self.assertFalse(context["unassigned"])
+        self.assertEqual(context["selected_round"], 1)  # kolejka 1 ma teraz niezagrany mecz
+
+    def test_league_without_rounds_shows_all_matches_in_one_list(self):
+        Match.objects.filter(round__isnull=False).delete()
+        context = self.get()
+        self.assertEqual(context["round_numbers"], [])
+        self.assertEqual(list(context["matches"]), [self.match])
+
+    def test_finished_match_shows_score_my_prediction_and_points(self):
+        Prediction.objects.create(user=self.user, match=self.r1, predicted_home=2, predicted_away=1)
+        self.r1.save()  # przelicza punkty
+        self.client.login(username="tester", password="haslo-testowe-123")
+        response = self.client.get(self.url, {"round": 1})
+        self.assertContains(response, "2:1")
+        self.assertContains(response, f"{POINTS_EXACT_SCORE} pkt")
+        self.assertNotContains(response, "Zapisz typy")  # w kolejce nie ma już czego typować
+
+    def test_round_is_kept_after_saving_predictions(self):
+        self.client.login(username="tester", password="haslo-testowe-123")
+        response = self.client.get(self.url, {"round": 3})
+        self.assertContains(response, f'name="next" value="{self.url}?round=3"')
 
 
 class MatchCleanTests(BaseTestCase):
@@ -423,7 +604,7 @@ class MatchDetailViewTests(BaseTestCase):
     def test_anonymous_does_not_see_predict_button(self):
         self.client.logout()
         response = self.client.get(self.url)
-        self.assertNotContains(response, reverse("typer:predict", args=[self.match.id]))
+        self.assertNotContains(response, "Zapisz typy")
 
 
 class MatchListViewTests(BaseTestCase):
@@ -601,7 +782,6 @@ class LoginRequiredTests(BaseTestCase):
             reverse("typer:group_create"),
             reverse("typer:group_join"),
             reverse("typer:group_detail", args=[self.group.id]),
-            reverse("typer:predict", args=[self.match.id]),
         ]
         for url in urls:
             with self.subTest(url=url):
@@ -683,3 +863,56 @@ class RegistrationTests(TestCase):
         self.data["email"] = ""
         self.client.post(self.url, self.data)
         self.assertFalse(User.objects.filter(username="nowy").exists())
+
+
+class MatchAdminTests(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        User.objects.create_superuser(username="admin", password="haslo-admina-123")
+        self.client.login(username="admin", password="haslo-admina-123")
+        self.url = reverse("admin:typer_match_changelist")
+        self.other_league = League.objects.create(
+            name="Inna liga", sport=self.sport, year=date.today().year + 1,
+            end_date=date.today() + timedelta(days=300))
+        self.third = Team.objects.create(name="Wisła", sport=self.sport)
+        self.m1 = self.add(self.league, 1, self.home, self.away)
+        self.m2 = self.add(self.league, 2, self.home, self.third)
+        self.m3 = self.add(self.other_league, 7, self.third, self.away)
+
+    def add(self, league, round_number, home, away):
+        return Match.objects.create(league=league, round=round_number, home_team=home, away_team=away,
+                                    scheduled_at=timezone.now() + timedelta(days=3))
+
+    def found(self, **params):
+        response = self.client.get(self.url, params)
+        self.assertEqual(response.status_code, 200)
+        return set(response.context["cl"].queryset) - {self.match}
+
+    def test_changelist_loads_and_shows_score(self):
+        self.finish(2, 1)
+        self.assertContains(self.client.get(self.url), "2:1")
+
+    def test_filter_by_league(self):
+        self.assertEqual(self.found(league__id__exact=self.other_league.id), {self.m3})
+
+    def test_filter_by_round(self):
+        self.assertEqual(self.found(round=2), {self.m2})
+
+    def test_filter_by_league_and_round(self):
+        self.assertEqual(self.found(league__id__exact=self.league.id, round=7), set())
+        self.assertEqual(self.found(league__id__exact=self.other_league.id, round=7), {self.m3})
+
+    def test_round_filter_offers_only_rounds_of_selected_league(self):
+        response = self.client.get(self.url, {"league__id__exact": self.league.id})
+        self.assertContains(response, "Kolejka 1")
+        self.assertContains(response, "Kolejka 2")
+        self.assertNotContains(response, "Kolejka 7")
+
+    def test_garbage_round_is_ignored(self):
+        self.assertEqual(self.found(round="abc"), {self.m1, self.m2, self.m3})
+
+    def test_search_by_team_name(self):
+        self.assertEqual(self.found(q="Wisła"), {self.m2, self.m3})
+
+    def test_add_form_loads(self):
+        self.assertEqual(self.client.get(reverse("admin:typer_match_add")).status_code, 200)

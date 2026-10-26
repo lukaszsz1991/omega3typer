@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('typer', '0001_initial'),
     ]
@@ -48,7 +47,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='group',
             name='members',
-            field=models.ManyToManyField(related_name='typing_groups', through='typer.GroupMember', to=settings.AUTH_USER_MODEL),
+            field=models.ManyToManyField(related_name='typing_groups', through='typer.GroupMember',
+                                         to=settings.AUTH_USER_MODEL),
         ),
         migrations.DeleteModel(
             name='LeagueMember',

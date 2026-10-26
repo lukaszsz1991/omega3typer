@@ -6,8 +6,8 @@ niej dołączyć, opisuje strona [Dla gracza](gracz.md#grupy-prywatne).
 
 ## Zarządzanie członkami
 
-Wszyscy członkowie grupy są widoczni w jej rankingu. Przy każdym z nich, poza Tobą, widzisz przycisk
-**Usuń**. Po potwierdzeniu użytkownik znika z grupy, a jego punkty przestają być w niej liczone. Jego
+Wszyscy członkowie grupy są widoczni w jej rankingu. Przy każdym z nich, poza Tobą, widzisz przycisk **Usuń**. Po
+potwierdzeniu użytkownik znika z grupy, a jego punkty przestają być w niej liczone. Jego
 typy i punkty w rankingach rozgrywek pozostają bez zmian.
 
 Warto wiedzieć, że:

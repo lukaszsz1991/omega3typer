@@ -1,14 +1,15 @@
 {% extends "typer/base.html" %}
 {% block content %}
-<h1 class="h3 mb-3">Rozgrywki</h1>
-<div class="list-group">
-  {% for league in leagues %}
-    <a href="{% url 'typer:league_detail' league.id %}" class="list-group-item list-group-item-action d-flex justify-content-between">
-      <span>{{ league.name }}</span>
-      <span class="text-muted">{{ league.sport.name }}</span>
-    </a>
-  {% empty %}
-    <p class="text-muted">Brak rozgrywek.</p>
-  {% endfor %}
-</div>
+    <h1 class="h3 mb-3">Rozgrywki</h1>
+    <div class="list-group">
+        {% for league in leagues %}
+            <a href="{% url 'typer:league_detail' league.id %}"
+               class="list-group-item list-group-item-action d-flex justify-content-between">
+                <span>{{ league.name }}</span>
+                <span class="text-muted">{{ league.sport.name }}</span>
+            </a>
+        {% empty %}
+            <p class="text-muted">Brak rozgrywek.</p>
+        {% endfor %}
+    </div>
 {% endblock %}

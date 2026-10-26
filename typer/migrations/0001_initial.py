@@ -9,7 +9,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
@@ -39,17 +38,32 @@ class Migration(migrations.Migration):
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('password', models.CharField(max_length=128, verbose_name='password')),
                 ('last_login', models.DateTimeField(blank=True, null=True, verbose_name='last login')),
-                ('is_superuser', models.BooleanField(default=False, help_text='Designates that this user has all permissions without explicitly assigning them.', verbose_name='superuser status')),
-                ('username', models.CharField(error_messages={'unique': 'A user with that username already exists.'}, help_text='Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.', max_length=150, unique=True, validators=[django.contrib.auth.validators.UnicodeUsernameValidator()], verbose_name='username')),
+                ('is_superuser', models.BooleanField(default=False,
+                                                     help_text='Designates that this user has all permissions without explicitly assigning them.',
+                                                     verbose_name='superuser status')),
+                ('username', models.CharField(error_messages={'unique': 'A user with that username already exists.'},
+                                              help_text='Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.',
+                                              max_length=150, unique=True,
+                                              validators=[django.contrib.auth.validators.UnicodeUsernameValidator()],
+                                              verbose_name='username')),
                 ('first_name', models.CharField(blank=True, max_length=150, verbose_name='first name')),
                 ('last_name', models.CharField(blank=True, max_length=150, verbose_name='last name')),
                 ('email', models.EmailField(blank=True, max_length=254, verbose_name='email address')),
-                ('is_staff', models.BooleanField(default=False, help_text='Designates whether the user can log into this admin site.', verbose_name='staff status')),
-                ('is_active', models.BooleanField(default=True, help_text='Designates whether this user should be treated as active. Unselect this instead of deleting accounts.', verbose_name='active')),
+                ('is_staff', models.BooleanField(default=False,
+                                                 help_text='Designates whether the user can log into this admin site.',
+                                                 verbose_name='staff status')),
+                ('is_active', models.BooleanField(default=True,
+                                                  help_text='Designates whether this user should be treated as active. Unselect this instead of deleting accounts.',
+                                                  verbose_name='active')),
                 ('date_joined', models.DateTimeField(default=django.utils.timezone.now, verbose_name='date joined')),
                 ('avatar', models.ImageField(blank=True, null=True, upload_to='avatars/')),
-                ('groups', models.ManyToManyField(blank=True, help_text='The groups this user belongs to. A user will get all permissions granted to each of their groups.', related_name='user_set', related_query_name='user', to='auth.group', verbose_name='groups')),
-                ('user_permissions', models.ManyToManyField(blank=True, help_text='Specific permissions for this user.', related_name='user_set', related_query_name='user', to='auth.permission', verbose_name='user permissions')),
+                ('groups', models.ManyToManyField(blank=True,
+                                                  help_text='The groups this user belongs to. A user will get all permissions granted to each of their groups.',
+                                                  related_name='user_set', related_query_name='user', to='auth.group',
+                                                  verbose_name='groups')),
+                ('user_permissions', models.ManyToManyField(blank=True, help_text='Specific permissions for this user.',
+                                                            related_name='user_set', related_query_name='user',
+                                                            to='auth.permission', verbose_name='user permissions')),
             ],
             options={
                 'verbose_name': 'user',
@@ -75,7 +89,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='league',
             name='members',
-            field=models.ManyToManyField(related_name='leagues', through='typer.LeagueMember', to=settings.AUTH_USER_MODEL),
+            field=models.ManyToManyField(related_name='leagues', through='typer.LeagueMember',
+                                         to=settings.AUTH_USER_MODEL),
         ),
         migrations.CreateModel(
             name='Match',
@@ -84,9 +99,14 @@ class Migration(migrations.Migration):
                 ('scheduled_at', models.DateTimeField()),
                 ('home_score', models.PositiveSmallIntegerField(blank=True, null=True)),
                 ('away_score', models.PositiveSmallIntegerField(blank=True, null=True)),
-                ('status', models.CharField(choices=[('scheduled', 'Zaplanowany'), ('live', 'W trakcie'), ('finished', 'Zakończony')], default='scheduled', max_length=20)),
-                ('result', models.CharField(blank=True, choices=[('home_win', 'Wygrana gospodarzy'), ('draw', 'Remis'), ('away_win', 'Wygrana gości')], max_length=20, null=True)),
-                ('league', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='matches', to='typer.league')),
+                ('status', models.CharField(
+                    choices=[('scheduled', 'Zaplanowany'), ('live', 'W trakcie'), ('finished', 'Zakończony')],
+                    default='scheduled', max_length=20)),
+                ('result', models.CharField(blank=True, choices=[('home_win', 'Wygrana gospodarzy'), ('draw', 'Remis'),
+                                                                 ('away_win', 'Wygrana gości')], max_length=20,
+                                            null=True)),
+                ('league', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='matches',
+                                             to='typer.league')),
             ],
         ),
         migrations.CreateModel(
@@ -97,8 +117,10 @@ class Migration(migrations.Migration):
                 ('predicted_away', models.PositiveIntegerField()),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
-                ('match', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='predictions', to='typer.match')),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='predictions', to=settings.AUTH_USER_MODEL)),
+                ('match', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='predictions',
+                                            to='typer.match')),
+                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='predictions',
+                                           to=settings.AUTH_USER_MODEL)),
             ],
             options={
                 'unique_together': {('user', 'match')},
@@ -109,30 +131,35 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('points_awarded', models.PositiveIntegerField(default=0)),
-                ('prediction', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='points', to='typer.prediction')),
+                ('prediction', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='points',
+                                                    to='typer.prediction')),
             ],
         ),
         migrations.AddField(
             model_name='league',
             name='sport',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='leagues', to='typer.sport'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='leagues',
+                                    to='typer.sport'),
         ),
         migrations.CreateModel(
             name='Team',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('name', models.CharField(max_length=100)),
-                ('sport', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='teams', to='typer.sport')),
+                ('sport', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='teams',
+                                            to='typer.sport')),
             ],
         ),
         migrations.AddField(
             model_name='match',
             name='away_team',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='away_matches', to='typer.team'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='away_matches',
+                                    to='typer.team'),
         ),
         migrations.AddField(
             model_name='match',
             name='home_team',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='home_matches', to='typer.team'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='home_matches',
+                                    to='typer.team'),
         ),
     ]

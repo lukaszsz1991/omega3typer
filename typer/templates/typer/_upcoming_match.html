@@ -1,14 +1,45 @@
-<div class="list-group-item d-flex justify-content-between align-items-center">
-    <div>
-        <small class="text-muted">{{ match.league }}</small><br>
-        <a href="{% url 'typer:match_detail' match.id %}" class="text-decoration-none">
-            {{ match.home_team }} – {{ match.away_team }}
-        </a>
-    </div>
-    <div>
-        <span class="badge bg-secondary me-2">{{ match.scheduled_at|date:"d.m.Y H:i" }}</span>
-        {% if user.is_authenticated and not match.is_locked %}
-            <a href="{% url 'typer:predict' match.id %}" class="btn btn-sm btn-primary">Typuj</a>
+<div class="list-group-item o3-row">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <div>
+            <small class="text-muted">{{ match.league }} · {{ match.scheduled_at|date:"d.m.Y H:i" }}</small><br>
+            <a href="{% url 'typer:match_detail' match.id %}" class="text-decoration-none">
+                {{ match.home_team }} – {{ match.away_team }}
+            </a>
+            {% if match.status == "finished" %}
+                <span class="fw-bold ms-2">{{ match.home_score }}:{{ match.away_score }}</span>
+            {% endif %}
+        </div>
+        {% if user.is_authenticated %}
+            {% with p=match.my_prediction %}
+                <div class="d-flex align-items-center gap-2 o3-typ">
+                    {% if match.is_locked %}
+                        <span class="text-muted small">
+                            {% if p %}Twój typ: <strong>{{ p.predicted_home }}:{{ p.predicted_away }}</strong>{% else %}Typowanie zamknięte{% endif %}
+                        </span>
+                        {% if p.points %}<span class="badge bg-success">{{ p.points.points_awarded }} pkt</span>{% endif %}
+                    {% else %}
+                        {% if p %}
+                            <span class="o3-saved text-muted small">Twój typ: <strong>{{ p.predicted_home }}:{{ p.predicted_away }}</strong></span>
+                        {% endif %}
+                        <span class="o3-inputs d-flex align-items-center gap-1 {% if p %}d-none{% endif %}">
+                            <input type="number" name="home_{{ match.id }}" min="0" max="99" inputmode="numeric"
+                                   class="form-control form-control-sm text-center o3-score" style="width:4rem"
+                                   aria-label="Bramki gospodarzy: {{ match.home_team }}"
+                                   value="{{ p.predicted_home|default_if_none:'' }}" data-orig="{{ p.predicted_home|default_if_none:'' }}"
+                                   {% if p %}disabled{% endif %}>
+                            <span>:</span>
+                            <input type="number" name="away_{{ match.id }}" min="0" max="99" inputmode="numeric"
+                                   class="form-control form-control-sm text-center o3-score" style="width:4rem"
+                                   aria-label="Bramki gości: {{ match.away_team }}"
+                                   value="{{ p.predicted_away|default_if_none:'' }}" data-orig="{{ p.predicted_away|default_if_none:'' }}"
+                                   {% if p %}disabled{% endif %}>
+                        </span>
+                        {% if p %}
+                            <button type="button" class="btn btn-sm btn-outline-secondary o3-edit">Zmień typ</button>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            {% endwith %}
         {% endif %}
     </div>
 </div>

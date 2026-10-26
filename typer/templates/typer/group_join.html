@@ -3,17 +3,17 @@
 {% block title %}Dołącz do grupy — Omega 3 Typer{% endblock %}
 
 {% block content %}
-<h2 class="mb-3">Dołącz do grupy</h2>
-<form method="post" class="col-md-4">
-    {% csrf_token %}
-    <div class="mb-3">
-        {{ form.code.label_tag }}
-        {{ form.code }}
-        {% for error in form.code.errors %}
-            <div class="text-danger small">{{ error }}</div>
-        {% endfor %}
-    </div>
-    <button type="submit" class="btn btn-primary">Dołącz</button>
-    <a href="{% url 'typer:group_list' %}" class="btn btn-link">Anuluj</a>
-</form>
+    <h2 class="mb-3">Dołącz do grupy</h2>
+    <form method="post" class="col-md-4">
+        {% csrf_token %}
+        <div class="mb-3">
+            {{ form.code.label_tag }}
+            {{ form.code }}
+            {% for error in form.code.errors %}
+                <div class="text-danger small">{{ error }}</div>
+            {% endfor %}
+        </div>
+        <button type="submit" class="btn btn-primary">Dołącz</button>
+        <a href="{% url 'typer:group_list' %}" class="btn btn-link">Anuluj</a>
+    </form>
 {% endblock %}

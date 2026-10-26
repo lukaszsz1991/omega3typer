@@ -1,0 +1,17 @@
+<form method="post" action="{% url 'typer:predict_bulk' %}" class="o3-bulk {{ extra_class|default:'mb-5' }}">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+    <div class="list-group">
+        {% for match in matches %}
+            {% include "typer/_upcoming_match.html" %}
+        {% empty %}
+            <div class="list-group-item text-muted">{{ empty_text|default:"Brak meczów." }}</div>
+        {% endfor %}
+    </div>
+    {% if user.is_authenticated and matches and not hide_save %}
+        <div class="position-sticky bottom-0 d-flex justify-content-end align-items-center gap-3 bg-body py-2">
+            <small class="text-muted">Wpisz wyniki i zapisz wszystkie typy jednym kliknięciem.</small>
+            <button type="submit" class="btn btn-primary o3-save">Zapisz typy</button>
+        </div>
+    {% endif %}
+</form>

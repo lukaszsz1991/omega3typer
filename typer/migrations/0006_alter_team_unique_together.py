@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('typer', '0005_league_end_date_league_year_typinggroup_league_and_more'),
     ]

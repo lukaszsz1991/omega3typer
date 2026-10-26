@@ -31,33 +31,34 @@
             </tbody>
         </table>
     </div>
-{% if league_tables %}
-<h3 class="mt-5 mb-3">Rankingi lig</h3>
-<div class="row g-4">
-    {% for t in league_tables %}
-        <div class="col-12 col-md-6">
-            <div class="card h-100">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <a href="{% url 'typer:league_detail' t.league.id %}" class="text-decoration-none fw-semibold">{{ t.league }}</a>
-                    <small class="text-muted">{{ t.league.sport.name }}</small>
+    {% if league_tables %}
+        <h3 class="mt-5 mb-3">Rankingi lig</h3>
+        <div class="row g-4">
+            {% for t in league_tables %}
+                <div class="col-12 col-md-6">
+                    <div class="card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <a href="{% url 'typer:league_detail' t.league.id %}"
+                               class="text-decoration-none fw-semibold">{{ t.league }}</a>
+                            <small class="text-muted">{{ t.league.sport.name }}</small>
+                        </div>
+                        <table class="table table-sm table-striped align-middle mb-0">
+                            <tbody>
+                            {% for r in t.rows %}
+                                <tr {% if r.username == user.username %}class="table-primary"{% endif %}>
+                                    <td style="width: 2.5rem;">{{ r.rank }}</td>
+                                    <td>{{ r.username }}</td>
+                                    <td class="text-end fw-bold">{{ r.total_points }}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                        <div class="card-footer text-end">
+                            <a href="{% url 'typer:league_detail' t.league.id %}" class="small">Pełny ranking</a>
+                        </div>
+                    </div>
                 </div>
-                <table class="table table-sm table-striped align-middle mb-0">
-                    <tbody>
-                        {% for r in t.rows %}
-                            <tr {% if r.username == user.username %}class="table-primary"{% endif %}>
-                                <td style="width: 2.5rem;">{{ r.rank }}</td>
-                                <td>{{ r.username }}</td>
-                                <td class="text-end fw-bold">{{ r.total_points }}</td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                <div class="card-footer text-end">
-                    <a href="{% url 'typer:league_detail' t.league.id %}" class="small">Pełny ranking</a>
-                </div>
-            </div>
+            {% endfor %}
         </div>
-    {% endfor %}
-</div>
-{% endif %}
+    {% endif %}
 {% endblock %}

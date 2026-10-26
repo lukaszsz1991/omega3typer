@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('typer', '0004_typinggroup_owner'),
     ]
@@ -27,7 +26,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='typinggroup',
             name='league',
-            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.PROTECT, related_name='groups', to='typer.league'),
+            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.PROTECT, related_name='groups',
+                                    to='typer.league'),
             preserve_default=False,
         ),
         migrations.AlterUniqueTogether(

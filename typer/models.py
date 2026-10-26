@@ -101,6 +101,7 @@ def outcome(home, away):
         return "away"
     return "draw"
 
+
 def goal_difference(home_score: int, away_score: int):
     return home_score - away_score
 
@@ -182,18 +183,21 @@ class Prediction(models.Model):
 
     def calculate_points(self):
         match = self.match
-        winner_predicted = (outcome(self.predicted_home, self.predicted_away) == outcome(match.home_score, match.away_score))
-        miss = abs(goal_difference(self.predicted_home, self.predicted_away) - goal_difference(match.home_score, match.away_score))
+        winner_predicted = (
+                outcome(self.predicted_home, self.predicted_away) == outcome(match.home_score, match.away_score))
+        miss = abs(goal_difference(self.predicted_home, self.predicted_away) - goal_difference(match.home_score,
+                                                                                               match.away_score))
         if match.league.sport.name == HANDBALL:
             if (self.predicted_home == match.home_score and self.predicted_away == match.away_score):
                 value = HB_EXACT_SCORE
-            elif (self.predicted_home - self.predicted_away == match.home_score - match.away_score and match.home_score == match.away_score):
+            elif (
+                    self.predicted_home - self.predicted_away == match.home_score - match.away_score and match.home_score == match.away_score):
                 value = HB_DRAW
             elif miss == 0:
                 value = HB_GOAL_DIFFERENCE
             elif (winner_predicted and miss == 1):
                 value = HB_GOAL_DIFFERENCE_MISTAKE_1
-            elif (winner_predicted and miss== 2):
+            elif (winner_predicted and miss == 2):
                 value = HB_GOAL_DIFFERENCE_MISTAKE_2
             elif (winner_predicted and miss == 3):
                 value = HB_GOAL_DIFFERENCE_MISTAKE_3
@@ -204,7 +208,8 @@ class Prediction(models.Model):
         else:
             if (self.predicted_home == match.home_score and self.predicted_away == match.away_score):
                 value = POINTS_EXACT_SCORE
-            elif (goal_difference(self.predicted_home, self.predicted_away) == goal_difference(match.home_score, match.away_score)):
+            elif (goal_difference(self.predicted_home, self.predicted_away) == goal_difference(match.home_score,
+                                                                                               match.away_score)):
                 value = POINTS_GOAL_DIFFERENCE
             elif winner_predicted:
                 value = POINTS_WINNER

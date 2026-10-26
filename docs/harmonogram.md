@@ -9,23 +9,23 @@ _Stan na 13.10.2026._
 ### Tydzień 1 – Analiza i projekt systemu
 
 - [x] Określenie wymagań funkcjonalnych:
-  - [x] rejestracja i logowanie użytkowników
-  - [x] tworzenie wydarzeń sportowych
-  - [x] typowanie wyników
-  - [x] system punktacji
-  - [x] ranking użytkowników
+    - [x] rejestracja i logowanie użytkowników
+    - [x] tworzenie wydarzeń sportowych
+    - [x] typowanie wyników
+    - [x] system punktacji
+    - [x] ranking użytkowników
 - [x] Projekt bazy danych (diagram ERD):
-  - [x] User
-  - [x] Sport
-  - [x] League
-  - [x] Team
-  - [x] Match
-  - [x] Prediction
-  - [x] Points
+    - [x] User
+    - [x] Sport
+    - [x] League
+    - [x] Team
+    - [x] Match
+    - [x] Prediction
+    - [x] Points
 - [x] Wybór technologii:
-  - [x] Django
-  - [x] PostgreSQL
-  - [x] Bootstrap (frontend)
+    - [x] Django
+    - [x] PostgreSQL
+    - [x] Bootstrap (frontend)
 
 **Rezultat:** gotowy projekt techniczny i model danych.
 
@@ -34,10 +34,10 @@ _Stan na 13.10.2026._
 ### Tydzień 2–3 – Implementacja backendu
 
 - [x] Implementacja modeli Django:
-  - [x] Team
-  - [x] Match
-  - [x] Prediction
-  - [x] Points
+    - [x] Team
+    - [x] Match
+    - [x] Prediction
+    - [x] Points
 - [x] Konfiguracja panelu administratora
 - [x] System rejestracji i logowania
 - [x] Dodawanie i edycja meczów (na razie przez panel admina)
@@ -51,9 +51,9 @@ _Stan na 13.10.2026._
 ### Tydzień 4 – System punktacji i ranking
 
 - [x] Logika przyznawania punktów:
-  - [x] dokładny wynik (4 pkt)
-  - [x] ta sama różnica bramek (2 pkt)
-  - [x] trafiony zwycięzca (1 pkt)
+    - [x] dokładny wynik (4 pkt)
+    - [x] ta sama różnica bramek (2 pkt)
+    - [x] trafiony zwycięzca (1 pkt)
 - [x] Automatyczne naliczanie punktów po zakończeniu meczu
 - [x] Prosty ranking użytkowników
 

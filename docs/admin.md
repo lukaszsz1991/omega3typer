@@ -18,7 +18,8 @@ Dane dodawaj w tej kolejności, bo każdy następny element wymaga poprzedniego:
    (zob. [Dla gracza](gracz.md#grupy-prywatne)).
 3. **Drużyny**: nazwa i sport. Nazwa drużyny jest unikalna w obrębie sportu, więc ta sama nazwa może
    wystąpić w dwóch różnych sportach.
-4. **Mecze**: rozgrywki, gospodarz, gość, termin, a opcjonalnie kolejka, a także bramki gospodarzy i gości dla meczów zakończonych.
+4. **Mecze**: rozgrywki, gospodarz, gość, termin, a opcjonalnie kolejka, a także bramki gospodarzy i gości dla meczów
+   zakończonych.
 
 Przy zapisie meczu panel sprawdza, że gospodarz i gość to dwie różne drużyny oraz że obie grają w tym
 samym sporcie co rozgrywki. Nowy mecz ma status „Zaplanowany” i od tej chwili gracze mogą go typować.
@@ -71,16 +72,16 @@ python manage.py import_matches dane.csv --delimiter ";"
 
 Plik jest w kodowaniu UTF-8, a pierwszy wiersz zawiera nazwy kolumn:
 
-| Kolumna | Opis | Wymagana |
-| --- | --- | --- |
-| `league` | nazwa rozgrywek, tak jak w panelu (wielkość liter i emotka flagi na początku są pomijane) | tak |
-| `year` | rok rozgrywek, tak jak w panelu | tak |
-| `round` | numer kolejki | nie |
-| `home_team` | gospodarz | tak |
-| `away_team` | gość | tak |
-| `scheduled_at` | termin w formacie `RRRR-MM-DD GG:MM` (czas polski) | tak |
-| `home_score` | bramki gospodarzy, puste dla meczu przyszłego | nie |
-| `away_score` | bramki gości, puste dla meczu przyszłego | nie |
+| Kolumna        | Opis                                                                                      | Wymagana |
+|----------------|-------------------------------------------------------------------------------------------|----------|
+| `league`       | nazwa rozgrywek, tak jak w panelu (wielkość liter i emotka flagi na początku są pomijane) | tak      |
+| `year`         | rok rozgrywek, tak jak w panelu                                                           | tak      |
+| `round`        | numer kolejki                                                                             | nie      |
+| `home_team`    | gospodarz                                                                                 | tak      |
+| `away_team`    | gość                                                                                      | tak      |
+| `scheduled_at` | termin w formacie `RRRR-MM-DD GG:MM` (czas polski)                                        | tak      |
+| `home_score`   | bramki gospodarzy, puste dla meczu przyszłego                                             | nie      |
+| `away_score`   | bramki gości, puste dla meczu przyszłego                                                  | nie      |
 
 Przykład:
 

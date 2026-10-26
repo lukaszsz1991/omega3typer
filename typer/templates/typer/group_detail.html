@@ -25,6 +25,10 @@
         {% endif %}
     {% endif %}
 
+    <h4 class="mt-4">Nadchodzące mecze</h4>
+    <p class="text-muted small">Najbliższe {{ upcoming_days }} dni w rozgrywkach grupy.</p>
+    {% include "typer/_prediction_list.html" with matches=upcoming empty_text="Brak meczów w najbliższych dniach." %}
+
     <h4 class="mt-4">Ranking grupy</h4>
     <table class="table table-striped align-middle">
         <thead>

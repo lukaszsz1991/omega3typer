@@ -18,7 +18,9 @@ source venv/bin/activate
 python manage.py createsuperuser
 python manage.py runserver
 ```
+
 Uruchomienie:
+
 ```bash
 python manage.py runserver
 ```
@@ -53,6 +55,7 @@ Panel administratora: <http://127.0.0.1:8000/admin/>
 ```bash
 python manage.py test
 ```
+
 ## Import meczów z CSV
 
 ```bash
@@ -60,7 +63,8 @@ python manage.py import_matches data/mecze_ekstraklasa2027.csv
 ```
 
 Kolumny: `league, year, round, home_team, away_team, scheduled_at, home_score, away_score`.
-Liga musi istnieć w panelu (nazwa i rok, flaga w nazwie jest pomijana). Ponowny import aktualizuje istniejące mecze i dopisuje wyniki.
+Liga musi istnieć w panelu (nazwa i rok, flaga w nazwie jest pomijana). Ponowny import aktualizuje istniejące mecze i
+dopisuje wyniki.
 
 ## Plan prac
 

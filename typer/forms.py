@@ -1,9 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.utils import timezone
-from django.core.validators import MaxValueValidator
-from .constants import MAX_PREDICTED_GOALS
-from .models import User, Prediction, League, TypingGroup
+from .models import User, League, TypingGroup
 
 
 class RegistrationForm(UserCreationForm):
@@ -18,26 +16,6 @@ class RegistrationForm(UserCreationForm):
         if User.objects.filter(email__iexact=email).exists():
             raise forms.ValidationError("Konto z tym adresem e-mail już istnieje.")
         return email
-
-
-class PredictionForm(forms.ModelForm):
-    class Meta:
-        model = Prediction
-        fields = ("predicted_home", "predicted_away")
-        labels = {
-            "predicted_home": "Bramki gospodarzy",
-            "predicted_away": "Bramki gości",
-        }
-        widgets = {
-            "predicted_home": forms.NumberInput(attrs={'class': 'form-control', "min": 0}),
-            "predicted_away": forms.NumberInput(attrs={'class': 'form-control', "min": 0}),
-        }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        for name in ("predicted_home", "predicted_away"):
-            self.fields[name].validators.append(MaxValueValidator(MAX_PREDICTED_GOALS))
-            self.fields[name].widget.attrs["max"] = MAX_PREDICTED_GOALS
 
 
 class TypingGroupForm(forms.ModelForm):

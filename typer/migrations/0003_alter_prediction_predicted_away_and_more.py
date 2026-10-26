@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('typer', '0002_group_remove_league_members_and_more'),
     ]
@@ -33,7 +32,8 @@ class Migration(migrations.Migration):
                 ('name', models.CharField(max_length=100)),
                 ('is_private', models.BooleanField(default=False)),
                 ('invite_code', models.CharField(blank=True, max_length=20, null=True, unique=True)),
-                ('members', models.ManyToManyField(related_name='typing_groups', through='typer.TypingGroupMember', to=settings.AUTH_USER_MODEL)),
+                ('members', models.ManyToManyField(related_name='typing_groups', through='typer.TypingGroupMember',
+                                                   to=settings.AUTH_USER_MODEL)),
             ],
         ),
         migrations.AlterField(

@@ -29,27 +29,13 @@
     {% if user.is_authenticated %}
         <h2 class="mb-1">Mecze Twoich grup</h2>
         <p class="text-muted small">Najbliższe {{ upcoming_days }} dni, rozgrywki wybrane w Twoich grupach.</p>
-        <div class="list-group mb-5">
-            {% for match in my_upcoming %}
-                {% include "typer/_upcoming_match.html" %}
-            {% empty %}
-                <div class="list-group-item text-muted">
-                    Brak meczów.
-                </div>
-            {% endfor %}
-        </div>
+        {% include "typer/_prediction_list.html" with matches=my_upcoming empty_text="Brak meczów." %}
     {% endif %}
 
     <h2 class="mb-1">{% if user.is_authenticated %}Pozostałe nadchodzące mecze{% else %}Nadchodzące
         mecze{% endif %}</h2>
     <p class="text-muted small">Najbliższe {{ upcoming_days }} dni.</p>
-    <div class="list-group mb-5">
-        {% for match in other_upcoming %}
-            {% include "typer/_upcoming_match.html" %}
-        {% empty %}
-            <div class="list-group-item text-muted">Brak nadchodzących meczów.</div>
-        {% endfor %}
-    </div>
+    {% include "typer/_prediction_list.html" with matches=other_upcoming empty_text="Brak nadchodzących meczów." %}
 
     <h2 class="mb-1">Zakończone mecze</h2>
     <p class="text-muted small">Ostatnie {{ finished_limit }}.</p>

@@ -5,15 +5,16 @@ from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.shortcuts import get_object_or_404
-from django.db.models import Sum, Q, F
+from django.db.models import Sum, Q, F, Count
 from django.http import HttpRequest, HttpResponse
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 from types import SimpleNamespace
-from .constants import UPCOMING_DAYS, FINISHED_LIMIT, RANKING_PREVIEW
+from .constants import UPCOMING_DAYS, FINISHED_LIMIT, RANKING_PREVIEW, MAX_PREDICTED_GOALS
 from .models import League, Match, Points, Prediction, User, TypingGroup, TypingGroupMember, Sport
-from .forms import RegistrationForm, PredictionForm, TypingGroupForm, JoinGroupForm
-from .utils import assign_ranks
+from .forms import RegistrationForm, TypingGroupForm, JoinGroupForm
+from .utils import assign_ranks, attach_predictions, parse_score
 
 
 def match_list_view(request: HttpRequest) -> HttpResponse:
@@ -35,11 +36,11 @@ def match_list_view(request: HttpRequest) -> HttpResponse:
 
     if request.user.is_authenticated:
         my_league_ids = request.user.typing_groups.values("league_id")
-        my_upcoming = upcoming.filter(league_id__in=my_league_ids)
-        other_upcoming = upcoming.exclude(league_id__in=my_league_ids)
+        my_upcoming = attach_predictions(request.user, upcoming.filter(league_id__in=my_league_ids))
+        other_upcoming = attach_predictions(request.user, upcoming.exclude(league_id__in=my_league_ids))
     else:
-        my_upcoming = Match.objects.none()
-        other_upcoming = upcoming
+        my_upcoming = []
+        other_upcoming = attach_predictions(request.user, upcoming)
 
     finished = matches.filter(status=Match.Status.FINISHED).order_by("-scheduled_at")[:FINISHED_LIMIT]
     return render(request, "typer/match_list.html", {
@@ -73,28 +74,60 @@ def home_view(request: HttpRequest) -> HttpResponse:
 
 
 @login_required
-def predict_view(request: HttpRequest, match_id) -> HttpResponse:
-    match = get_object_or_404(Match, pk=match_id)
+@require_POST
+def predict_bulk_view(request: HttpRequest) -> HttpResponse:
+    """Zbiorczy zapis typów: pola home_<id_meczu> i away_<id_meczu>.
 
-    if match.is_locked:
-        messages.error(request, "Typowanie tego meczu jest już zakończone.")
-        return redirect("typer:match_list")
-
-    existing_prediction = Prediction.objects.filter(user=request.user, match=match).first()
-
-    if request.method == "POST":
-        form = PredictionForm(request.POST, instance=existing_prediction)
-        if form.is_valid():
-            prediction = form.save(commit=False)
-            prediction.user = request.user
-            prediction.match = match
+    Puste pary są pomijane, poprawne zapisywane, a błędne zgłaszane komunikatem."""
+    ids = {
+        int(key[5:]) for key in request.POST
+        if key[:5] in ("home_", "away_") and key[5:].isdigit() and len(key) <= 14
+    }
+    matches = Match.objects.select_related("home_team", "away_team").in_bulk(ids)
+    existing = {
+        p.match_id: p for p in Prediction.objects.filter(user=request.user, match_id__in=ids)
+    }
+    saved = 0
+    errors = 0
+    for match_id in sorted(ids):
+        match = matches.get(match_id)
+        raw_home = request.POST.get(f"home_{match_id}", "").strip()
+        raw_away = request.POST.get(f"away_{match_id}", "").strip()
+        if match is None or (not raw_home and not raw_away):
+            continue
+        label = f"{match.home_team} – {match.away_team}"
+        if match.is_locked:
+            messages.error(request, f"{label}: typowanie tego meczu jest już zakończone.")
+            errors += 1
+            continue
+        try:
+            home = parse_score(raw_home, MAX_PREDICTED_GOALS)
+            away = parse_score(raw_away, MAX_PREDICTED_GOALS)
+        except ValueError:
+            messages.error(
+                request,
+                f"{label}: podaj oba wyniki jako liczby od 0 do {MAX_PREDICTED_GOALS}. Typ nie został zapisany.",
+            )
+            errors += 1
+            continue
+        prediction = existing.get(match_id)
+        if prediction is None:
+            Prediction.objects.create(user=request.user, match=match, predicted_home=home, predicted_away=away)
+            saved += 1
+        elif (prediction.predicted_home, prediction.predicted_away) != (home, away):
+            prediction.predicted_home, prediction.predicted_away = home, away
             prediction.save()
-            messages.success(request, "Typ zapisany.")
-            return redirect("typer:match_list")
-    else:
-        form = PredictionForm(instance=existing_prediction)
+            saved += 1
+    if saved:
+        messages.success(request, f"Zapisano typy: {saved}.")
+    elif not errors:
+        messages.info(request, "Nie wprowadzono żadnych zmian.")
 
-    return render(request, "typer/predict.html", {"form": form, "match": match})
+    target = request.POST.get("next", "")
+    if not url_has_allowed_host_and_scheme(target, allowed_hosts={request.get_host()},
+                                           require_https=request.is_secure()):
+        target = "typer:match_list"
+    return redirect(target)
 
 
 def ranking_view(request: HttpRequest) -> HttpResponse:
@@ -164,8 +197,15 @@ def group_detail_view(request: HttpRequest, group_id: int) -> HttpResponse:
                                    default=0))
         .order_by("-total_points", "username")
     )
-    return render(request, "typer/group_detail.html",
-                  {"group": group, "ranking": ranking, "is_owner": group.owner_id == request.user.id})
+    now = timezone.now()
+    upcoming = attach_predictions(request.user, Match.objects.filter(
+        league=group.league, status=Match.Status.SCHEDULED,
+        scheduled_at__gte=now, scheduled_at__lte=now + timedelta(days=UPCOMING_DAYS),
+    ).select_related("league", "home_team", "away_team").order_by("scheduled_at"))
+    return render(request, "typer/group_detail.html", {
+        "group": group, "ranking": ranking, "is_owner": group.owner_id == request.user.id,
+        "upcoming": upcoming, "upcoming_days": UPCOMING_DAYS,
+    })
 
 
 @login_required
@@ -201,9 +241,43 @@ def league_list_view(request: HttpRequest) -> HttpResponse:
 
 def league_detail_view(request: HttpRequest, league_id: int) -> HttpResponse:
     league = get_object_or_404(League.objects.select_related("sport"), pk=league_id)
-    matches = Match.objects.filter(league=league).select_related("home_team", "away_team")
-    upcoming = matches.filter(status=Match.Status.SCHEDULED).order_by("scheduled_at")
-    finished = matches.filter(status=Match.Status.FINISHED).order_by("-scheduled_at")
+    all_matches = Match.objects.filter(league=league)
+
+    # kolejki ligi; "open" = liczba jeszcze niezagranych meczów w kolejce
+    rounds = list(
+        all_matches.filter(round__isnull=False).values("round")
+        .annotate(open=Count("id", filter=Q(status=Match.Status.SCHEDULED)))
+        .order_by("round")
+    )
+    round_numbers = [r["round"] for r in rounds]
+    has_unassigned = all_matches.filter(round__isnull=True).exists()
+
+    selected_round = None
+    unassigned = False
+    if rounds:
+        raw = request.GET.get("round", "")
+        if raw == "none" and has_unassigned:
+            unassigned = True
+        elif raw.isdigit() and int(raw) in round_numbers:
+            selected_round = int(raw)
+        else:  # domyślnie bieżąca kolejka: pierwsza z niezagranymi meczami, a gdy brak, ostatnia
+            selected_round = next((r["round"] for r in rounds if r["open"]), round_numbers[-1])
+        matches_qs = (all_matches.filter(round=selected_round) if selected_round is not None
+                      else all_matches.filter(round__isnull=True))
+    else:
+        matches_qs = all_matches  # liga bez podziału na kolejki: jedna lista
+
+    matches = attach_predictions(
+        request.user,
+        matches_qs.select_related("league", "home_team", "away_team").order_by("scheduled_at", "id"),
+    )
+
+    prev_round = next_round = None
+    if selected_round is not None:
+        index = round_numbers.index(selected_round)
+        prev_round = round_numbers[index - 1] if index > 0 else None
+        next_round = round_numbers[index + 1] if index + 1 < len(round_numbers) else None
+
     ranking = assign_ranks(
         User.objects.annotate(
             total_points=Sum(
@@ -214,8 +288,14 @@ def league_detail_view(request: HttpRequest, league_id: int) -> HttpResponse:
     )
     return render(request, "typer/league_detail.html", {
         "league": league,
-        "upcoming": upcoming,
-        "finished": finished,
+        "matches": matches,
+        "no_open_matches": all(m.is_locked for m in matches),
+        "round_numbers": round_numbers,
+        "has_unassigned": has_unassigned,
+        "selected_round": selected_round,
+        "unassigned": unassigned,
+        "prev_round": prev_round,
+        "next_round": next_round,
         "ranking": ranking,
     })
 
@@ -264,6 +344,7 @@ def match_detail_view(request: HttpRequest, match_id: int) -> HttpResponse:
             Prediction.objects.filter(user=request.user, match=match)
             .select_related("points").first()
         )
+    match.my_prediction = my_prediction
     predictions = None
     if match.is_locked:
         predictions = (
@@ -273,5 +354,6 @@ def match_detail_view(request: HttpRequest, match_id: int) -> HttpResponse:
     return render(request, "typer/match_detail.html", {
         "match": match,
         "my_prediction": my_prediction,
+        "editable": [match],
         "predictions": predictions,
     })

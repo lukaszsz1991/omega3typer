@@ -26,21 +26,19 @@
     </div>
 
     {% if user.is_authenticated %}
-        <h4>Twój typ</h4>
-        {% if my_prediction %}
+        {% if match.is_locked %}<h4>Twój typ</h4>{% endif %}
+        {% if match.is_locked and my_prediction %}
             <p class="fs-4 mb-2">
                 {{ my_prediction.predicted_home }}:{{ my_prediction.predicted_away }}
                 {% if my_prediction.points %}
                     <span class="badge bg-success align-middle">{{ my_prediction.points.points_awarded }} pkt</span>
                 {% endif %}
             </p>
-        {% else %}
+        {% elif match.is_locked %}
             <p class="text-muted">Nie typowałeś tego meczu.</p>
         {% endif %}
         {% if not match.is_locked %}
-            <a class="btn btn-primary" href="{% url 'typer:predict' match.id %}">
-                {% if my_prediction %}Zmień typ{% else %}Typuj{% endif %}
-            </a>
+            {% include "typer/_prediction_list.html" with matches=editable extra_class="mb-3" %}
         {% endif %}
     {% else %}
         <p class="text-muted"><a href="{% url 'typer:login' %}">Zaloguj się</a>, żeby typować.</p>
